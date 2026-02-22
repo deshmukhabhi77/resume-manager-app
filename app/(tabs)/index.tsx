@@ -1,48 +1,179 @@
-import { ScrollView, Text, View, TouchableOpacity } from "react-native";
-
+import { ScrollView, Text, View, TouchableOpacity, FlatList, RefreshControl } from "react-native";
+import { useRouter } from "expo-router";
+import { useEffect, useState } from "react";
 import { ScreenContainer } from "@/components/screen-container";
+import { IconSymbol } from "@/components/ui/icon-symbol";
+import { useDB, Resume } from "@/lib/db-context";
+import { useColors } from "@/hooks/use-colors";
 
-/**
- * Home Screen - NativeWind Example
- *
- * This template uses NativeWind (Tailwind CSS for React Native).
- * You can use familiar Tailwind classes directly in className props.
- *
- * Key patterns:
- * - Use `className` instead of `style` for most styling
- * - Theme colors: use tokens directly (bg-background, text-foreground, bg-primary, etc.); no dark: prefix needed
- * - Responsive: standard Tailwind breakpoints work on web
- * - Custom colors defined in tailwind.config.js
- */
+type ListItem = { type: "header" } | { type: "resume"; data: Resume };
+
 export default function HomeScreen() {
+  const router = useRouter();
+  const { resumes, getRecentResumes, loadResumes } = useDB();
+  const colors = useColors();
+  const [refreshing, setRefreshing] = useState(false);
+
+  useEffect(() => {
+    loadResumes();
+  }, []);
+
+  const recentResumes = getRecentResumes(5);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await loadResumes();
+    setRefreshing(false);
+  };
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes === 0) return "0 B";
+    const k = 1024;
+    const sizes = ["B", "KB", "MB"];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + " " + sizes[i];
+  };
+
+  const formatDate = (timestamp: number) => {
+    const now = Date.now();
+    const diff = now - timestamp;
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+
+    if (hours < 1) return "Just now";
+    if (hours < 24) return `${hours}h ago`;
+    if (days === 1) return "Yesterday";
+    if (days < 7) return `${days}d ago`;
+    return new Date(timestamp).toLocaleDateString();
+  };
+
+  const data: ListItem[] = [{ type: "header" }, ...recentResumes.map((r) => ({ type: "resume" as const, data: r }))];
+
   return (
-    <ScreenContainer className="p-6">
-      <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
-        <View className="flex-1 gap-8">
-          {/* Hero Section */}
-          <View className="items-center gap-2">
-            <Text className="text-4xl font-bold text-foreground">Welcome</Text>
-            <Text className="text-base text-muted text-center">
-              Edit app/(tabs)/index.tsx to get started
-            </Text>
-          </View>
+    <ScreenContainer className="flex-1 bg-background" containerClassName="bg-background">
+      <FlatList
+        data={data}
+        keyExtractor={(item, index) => (item.type === "header" ? "header" : item.data.id)}
+        renderItem={({ item }) => {
+          if (item.type === "header") {
+            return (
+              <View className="flex-1">
+                {/* Welcome Banner */}
+                <View className="p-4">
+                  <View className="bg-primary rounded-2xl p-6 shadow-lg">
+                    <Text className="text-white text-2xl font-bold mb-1">Welcome back!</Text>
+                    <Text className="text-white/70 text-sm mb-4">You have {resumes.length} resumes in your library.</Text>
+                    <View className="flex-row gap-4">
+                      <View>
+                        <Text className="text-white/60 text-xs uppercase tracking-wider font-semibold">Last Sync</Text>
+                        <Text className="text-white text-sm font-medium">Just now</Text>
+                      </View>
+                      <View className="w-px bg-white/20" />
+                      <View>
+                        <Text className="text-white/60 text-xs uppercase tracking-wider font-semibold">Storage</Text>
+                        <Text className="text-white text-sm font-medium">45% used</Text>
+                      </View>
+                    </View>
+                  </View>
+                </View>
 
-          {/* Example Card */}
-          <View className="w-full max-w-sm self-center bg-surface rounded-2xl p-6 shadow-sm border border-border">
-            <Text className="text-lg font-semibold text-foreground mb-2">NativeWind Ready</Text>
-            <Text className="text-sm text-muted leading-relaxed">
-              Use Tailwind CSS classes directly in your React Native components.
-            </Text>
-          </View>
+                {/* Quick Actions */}
+                <View className="px-4 py-2">
+                  <Text className="text-slate-500 text-xs uppercase tracking-widest font-semibold px-1 mb-4">Quick Actions</Text>
 
-          {/* Example Button */}
-          <View className="items-center">
-            <TouchableOpacity className="bg-primary px-6 py-3 rounded-full active:opacity-80">
-              <Text className="text-background font-semibold">Get Started</Text>
-            </TouchableOpacity>
+                  {/* Upload Action */}
+                  <TouchableOpacity
+                    onPress={() => router.push("/upload")}
+                    className="bg-primary rounded-2xl p-5 flex-row items-center gap-5 mb-4 shadow-md active:opacity-80"
+                  >
+                    <View className="w-14 h-14 bg-white/20 rounded-lg flex items-center justify-center">
+                      <IconSymbol name="cloud_upload" size={32} color="white" />
+                    </View>
+                    <View className="flex-1">
+                      <Text className="text-white font-bold text-lg">Upload Resume</Text>
+                      <Text className="text-white/70 text-sm">PDF, DOCX, or Image</Text>
+                    </View>
+                    <IconSymbol name="chevron.right" size={24} color="rgba(255,255,255,0.5)" />
+                  </TouchableOpacity>
+
+                  {/* Search Action */}
+                  <TouchableOpacity
+                    onPress={() => router.push("/search")}
+                    className="bg-white rounded-2xl p-5 flex-row items-center gap-5 shadow-sm border border-slate-200 active:opacity-80"
+                  >
+                    <View className="w-14 h-14 bg-primary/10 rounded-lg flex items-center justify-center">
+                      <IconSymbol name="search" size={32} color={colors.primary} />
+                    </View>
+                    <View className="flex-1">
+                      <Text className="text-slate-900 font-bold text-lg">Search Resumes</Text>
+                      <Text className="text-slate-500 text-sm">Find by skill, role, or name</Text>
+                    </View>
+                    <IconSymbol name="chevron.right" size={24} color="#ccc" />
+                  </TouchableOpacity>
+                </View>
+
+                {/* Recent Uploads Section */}
+                <View className="px-4 py-6">
+                  <View className="flex-row justify-between items-center mb-4 px-1">
+                    <Text className="text-slate-500 text-xs uppercase tracking-widest font-semibold">Recent Uploads</Text>
+                    {recentResumes.length > 0 && (
+                      <TouchableOpacity onPress={() => router.push("/search")}>
+                        <Text className="text-primary text-xs font-bold">View All</Text>
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                </View>
+              </View>
+            );
+          }
+
+          const resume = item.data;
+          return (
+            <View className="px-4 mb-3">
+              <View className="bg-white rounded-2xl p-4 flex-row items-center gap-4 border border-slate-200">
+                <View className="w-10 h-10 bg-red-50 rounded flex items-center justify-center">
+                  <IconSymbol name="picture_as_pdf" size={24} color="#dc2626" />
+                </View>
+                <View className="flex-1 min-w-0">
+                  <Text className="text-slate-900 text-sm font-semibold truncate">{resume.name}</Text>
+                  <Text className="text-slate-500 text-xs">
+                    Added {formatDate(resume.uploadedAt)} • {formatFileSize(resume.fileSize)}
+                  </Text>
+                </View>
+                <TouchableOpacity>
+                  <IconSymbol name="more_vert" size={24} color="#999" />
+                </TouchableOpacity>
+              </View>
+            </View>
+          );
+        }}
+        ListEmptyComponent={
+          <View className="px-4 py-8">
+            <View className="bg-slate-50 rounded-2xl p-6 items-center">
+              <IconSymbol name="description" size={48} color={colors.muted} />
+              <Text className="text-slate-600 text-center mt-4 text-sm">No resumes yet. Upload your first resume to get started!</Text>
+            </View>
           </View>
-        </View>
-      </ScrollView>
+        }
+        ListFooterComponent={
+          <View className="px-4 pb-6">
+            <View className="bg-teal-50 rounded-2xl p-4 flex-row gap-4 items-start border border-teal-100">
+              <View className="p-2 bg-teal-500 rounded-lg">
+                <IconSymbol name="lightbulb" size={24} color="white" />
+              </View>
+              <View className="flex-1">
+                <Text className="text-teal-900 font-bold text-sm">Career Tip</Text>
+                <Text className="text-teal-800 text-xs mt-1 leading-relaxed">
+                  Ensure your resume is ATS-friendly by using standard headings and clear fonts. Check our guide for more details.
+                </Text>
+              </View>
+            </View>
+          </View>
+        }
+        scrollEnabled={true}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        contentContainerStyle={{ paddingBottom: 20 }}
+      />
     </ScreenContainer>
   );
 }

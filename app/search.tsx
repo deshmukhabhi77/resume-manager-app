@@ -1,0 +1,144 @@
+import { ScrollView, Text, View, TouchableOpacity, TextInput, FlatList } from "react-native";
+import { useRouter } from "expo-router";
+import { useState, useMemo, useEffect } from "react";
+import { ScreenContainer } from "@/components/screen-container";
+import { IconSymbol } from "@/components/ui/icon-symbol";
+import { useDB } from "@/lib/db-context";
+import { useColors } from "@/hooks/use-colors";
+import * as WebBrowser from "expo-web-browser";
+
+export default function SearchScreen() {
+  const router = useRouter();
+  const { searchResumes, loadResumes } = useDB();
+  const colors = useColors();
+  const [query, setQuery] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
+
+  useEffect(() => {
+    loadResumes();
+  }, []);
+
+  // Debounce search input
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedQuery(query);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [query]);
+
+  const results = useMemo(() => {
+    return searchResumes(debouncedQuery);
+  }, [debouncedQuery, searchResumes]);
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes === 0) return "0 B";
+    const k = 1024;
+    const sizes = ["B", "KB", "MB"];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + " " + sizes[i];
+  };
+
+  const formatDate = (timestamp: number) => {
+    const now = Date.now();
+    const diff = now - timestamp;
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+
+    if (hours < 1) return "Just now";
+    if (hours < 24) return `${hours}h ago`;
+    if (days === 1) return "Yesterday";
+    if (days < 7) return `${days}d ago`;
+    return new Date(timestamp).toLocaleDateString();
+  };
+
+  const handleViewPDF = async (filePath: string) => {
+    try {
+      await WebBrowser.openBrowserAsync(filePath);
+    } catch (error) {
+      console.error("Failed to open PDF:", error);
+    }
+  };
+
+  return (
+    <ScreenContainer className="flex-1 bg-background" containerClassName="bg-background">
+      {/* Header */}
+      <View className="px-4 py-4 flex-row items-center gap-3 border-b border-slate-200">
+        <TouchableOpacity onPress={() => router.back()} className="p-2">
+          <IconSymbol name="chevron.right" size={24} color="#19217b" />
+        </TouchableOpacity>
+        <Text className="text-2xl font-bold text-foreground flex-1">Search</Text>
+      </View>
+
+      {/* Search Input */}
+      <View className="px-4 py-4 gap-2">
+        <View className="flex-row items-center bg-white border border-slate-200 rounded-lg px-3 gap-2">
+          <IconSymbol name="search" size={20} color={colors.muted} />
+          <TextInput
+            placeholder="Search by name or role..."
+            value={query}
+            onChangeText={setQuery}
+            className="flex-1 py-3 text-base"
+            placeholderTextColor="#999"
+          />
+        </View>
+        <Text className="text-xs text-slate-500 px-1">
+          {results.length} result{results.length !== 1 ? "s" : ""}
+        </Text>
+      </View>
+
+      {/* Results List */}
+      <FlatList
+        data={results}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => (
+          <View className="px-4 mb-3">
+            <View className="bg-white rounded-2xl p-4 border border-slate-200">
+              <View className="flex-row items-start gap-4 mb-3">
+                <View className="w-10 h-10 bg-blue-50 rounded flex items-center justify-center">
+                  <IconSymbol name="description" size={24} color="#2563eb" />
+                </View>
+                <View className="flex-1 min-w-0">
+                  <Text className="text-slate-900 text-sm font-semibold">{item.name}</Text>
+                  <Text className="text-slate-500 text-xs mt-1">{item.designation}</Text>
+                  <Text className="text-slate-400 text-xs mt-2">
+                    Added {formatDate(item.uploadedAt)} • {formatFileSize(item.fileSize)}
+                  </Text>
+                </View>
+              </View>
+              <TouchableOpacity
+                onPress={() => handleViewPDF(item.filePath)}
+                className="bg-primary rounded-lg py-2 items-center"
+              >
+                <Text className="text-white font-semibold text-sm">View PDF</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
+        scrollEnabled={true}
+        contentContainerStyle={{ paddingBottom: 20 }}
+        ListEmptyComponent={
+          query.length > 0 ? (
+            <View className="px-4 py-8">
+              <View className="bg-slate-50 rounded-2xl p-6 items-center">
+                <IconSymbol name="search" size={48} color={colors.muted} />
+                <Text className="text-slate-600 text-center mt-4 text-sm">
+                  No resumes found for "{query}"
+                </Text>
+              </View>
+            </View>
+          ) : (
+            <View className="px-4 py-8">
+              <View className="bg-slate-50 rounded-2xl p-6 items-center">
+                <IconSymbol name="search" size={48} color={colors.muted} />
+                <Text className="text-slate-600 text-center mt-4 text-sm">
+                  Start typing to search your resumes
+                </Text>
+              </View>
+            </View>
+          )
+        }
+      />
+    </ScreenContainer>
+  );
+}
