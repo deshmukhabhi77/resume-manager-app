@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useCallback } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { copyResumeToStorage, deleteResumeFile, initializeStorageDirectory } from "./file-storage";
 
 export interface Resume {
   id: string;
@@ -27,6 +28,12 @@ const STORAGE_KEY = "resumes_db";
 export function DBProvider({ children }: { children: React.ReactNode }) {
   const [resumes, setResumes] = useState<Resume[]>([]);
 
+  // Initialize storage on mount
+  React.useEffect(() => {
+    initializeStorageDirectory().catch((error) => console.error("Failed to initialize storage:", error));
+    loadResumes();
+  }, []);
+
   // Load resumes from AsyncStorage on mount
   const loadResumes = useCallback(async () => {
     try {
@@ -39,16 +46,19 @@ export function DBProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  // Add a new resume
+  // Add a new resume with file copying
   const addResume = useCallback(
     async (name: string, designation: string, experienceLevel: "fresher" | "experience", filePath: string, fileSize: number) => {
       try {
+        // Copy file to internal storage
+        const storedFilePath = await copyResumeToStorage(filePath, name);
+
         const newResume: Resume = {
           id: Date.now().toString(),
           name,
           designation,
           experienceLevel,
-          filePath,
+          filePath: storedFilePath,
           fileSize,
           uploadedAt: Date.now(),
         };
@@ -85,10 +95,16 @@ export function DBProvider({ children }: { children: React.ReactNode }) {
     [resumes]
   );
 
-  // Delete a resume
+  // Delete a resume and its file
   const deleteResume = useCallback(
     async (id: string) => {
       try {
+        const resumeToDelete = resumes.find((r) => r.id === id);
+        if (resumeToDelete) {
+          // Delete the file from storage
+          await deleteResumeFile(resumeToDelete.filePath);
+        }
+
         const updated = resumes.filter((r) => r.id !== id);
         setResumes(updated);
         await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
@@ -100,26 +116,22 @@ export function DBProvider({ children }: { children: React.ReactNode }) {
     [resumes]
   );
 
-  return (
-    <DBContext.Provider
-      value={{
-        resumes,
-        addResume,
-        searchResumes,
-        getRecentResumes,
-        deleteResume,
-        loadResumes,
-      }}
-    >
-      {children}
-    </DBContext.Provider>
-  );
+  const value: DBContextType = {
+    resumes,
+    addResume,
+    searchResumes,
+    getRecentResumes,
+    deleteResume,
+    loadResumes,
+  };
+
+  return <DBContext.Provider value={value}>{children}</DBContext.Provider>;
 }
 
-export function useDB() {
+export function useDB(): DBContextType {
   const context = useContext(DBContext);
   if (!context) {
-    throw new Error("useDB must be used within DBProvider");
+    throw new Error("useDB must be used within a DBProvider");
   }
   return context;
 }

@@ -80,3 +80,15 @@
 - [ ] Test PDF viewing on iOS and Android
 - [x] Update Home screen to display experience badges
 - [x] Update Search screen to display experience badges
+
+
+## File Storage Features
+
+- [x] Copy resume files to app internal storage directory
+- [x] Implement file management utilities for internal storage
+- [x] Update database context to handle file copying
+- [x] Update Upload screen to copy files to internal storage
+- [x] Update PDF viewer to open stored files
+- [x] Implement file deletion when resume is deleted
+- [x] Add error handling for file operations
+- [ ] Test file storage on iOS and Android
