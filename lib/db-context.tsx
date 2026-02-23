@@ -5,6 +5,7 @@ export interface Resume {
   id: string;
   name: string;
   designation: string;
+  experienceLevel: "fresher" | "experience";
   filePath: string;
   fileSize: number;
   uploadedAt: number; // timestamp
@@ -12,7 +13,7 @@ export interface Resume {
 
 interface DBContextType {
   resumes: Resume[];
-  addResume: (name: string, designation: string, filePath: string, fileSize: number) => Promise<void>;
+  addResume: (name: string, designation: string, experienceLevel: "fresher" | "experience", filePath: string, fileSize: number) => Promise<void>;
   searchResumes: (query: string) => Resume[];
   getRecentResumes: (limit: number) => Resume[];
   deleteResume: (id: string) => Promise<void>;
@@ -40,12 +41,13 @@ export function DBProvider({ children }: { children: React.ReactNode }) {
 
   // Add a new resume
   const addResume = useCallback(
-    async (name: string, designation: string, filePath: string, fileSize: number) => {
+    async (name: string, designation: string, experienceLevel: "fresher" | "experience", filePath: string, fileSize: number) => {
       try {
         const newResume: Resume = {
           id: Date.now().toString(),
           name,
           designation,
+          experienceLevel,
           filePath,
           fileSize,
           uploadedAt: Date.now(),

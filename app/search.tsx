@@ -5,7 +5,7 @@ import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useDB } from "@/lib/db-context";
 import { useColors } from "@/hooks/use-colors";
-import * as WebBrowser from "expo-web-browser";
+import { PDFViewerModal } from "@/components/pdf-viewer-modal";
 
 export default function SearchScreen() {
   const router = useRouter();
@@ -13,6 +13,7 @@ export default function SearchScreen() {
   const colors = useColors();
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
+  const [selectedPDF, setSelectedPDF] = useState<{ path: string; name: string } | null>(null);
 
   useEffect(() => {
     loadResumes();
@@ -52,12 +53,12 @@ export default function SearchScreen() {
     return new Date(timestamp).toLocaleDateString();
   };
 
-  const handleViewPDF = async (filePath: string) => {
-    try {
-      await WebBrowser.openBrowserAsync(filePath);
-    } catch (error) {
-      console.error("Failed to open PDF:", error);
-    }
+  const getExperienceBadgeColor = (level: string) => {
+    return level === "fresher" ? "bg-blue-100" : "bg-green-100";
+  };
+
+  const getExperienceBadgeTextColor = (level: string) => {
+    return level === "fresher" ? "text-blue-700" : "text-green-700";
   };
 
   return (
@@ -93,7 +94,10 @@ export default function SearchScreen() {
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <View className="px-4 mb-3">
-            <View className="bg-white rounded-2xl p-4 border border-slate-200">
+            <TouchableOpacity
+              onPress={() => setSelectedPDF({ path: item.filePath, name: item.name })}
+              className="bg-white rounded-2xl p-4 border border-slate-200"
+            >
               <View className="flex-row items-start gap-4 mb-3">
                 <View className="w-10 h-10 bg-blue-50 rounded flex items-center justify-center">
                   <IconSymbol name="description" size={24} color="#2563eb" />
@@ -101,18 +105,25 @@ export default function SearchScreen() {
                 <View className="flex-1 min-w-0">
                   <Text className="text-slate-900 text-sm font-semibold">{item.name}</Text>
                   <Text className="text-slate-500 text-xs mt-1">{item.designation}</Text>
-                  <Text className="text-slate-400 text-xs mt-2">
-                    Added {formatDate(item.uploadedAt)} • {formatFileSize(item.fileSize)}
-                  </Text>
+                  <View className="flex-row gap-2 mt-2 items-center">
+                    <View className={`px-2 py-1 rounded ${getExperienceBadgeColor(item.experienceLevel)}`}>
+                      <Text className={`text-xs font-semibold ${getExperienceBadgeTextColor(item.experienceLevel)}`}>
+                        {item.experienceLevel === "fresher" ? "Fresher" : "Experienced"}
+                      </Text>
+                    </View>
+                    <Text className="text-slate-400 text-xs">
+                      Added {formatDate(item.uploadedAt)} • {formatFileSize(item.fileSize)}
+                    </Text>
+                  </View>
                 </View>
               </View>
               <TouchableOpacity
-                onPress={() => handleViewPDF(item.filePath)}
+                onPress={() => setSelectedPDF({ path: item.filePath, name: item.name })}
                 className="bg-primary rounded-lg py-2 items-center"
               >
                 <Text className="text-white font-semibold text-sm">View PDF</Text>
               </TouchableOpacity>
-            </View>
+            </TouchableOpacity>
           </View>
         )}
         scrollEnabled={true}
@@ -139,6 +150,16 @@ export default function SearchScreen() {
           )
         }
       />
+
+      {/* PDF Viewer Modal */}
+      {selectedPDF && (
+        <PDFViewerModal
+          visible={!!selectedPDF}
+          filePath={selectedPDF.path}
+          fileName={selectedPDF.name}
+          onClose={() => setSelectedPDF(null)}
+        />
+      )}
     </ScreenContainer>
   );
 }

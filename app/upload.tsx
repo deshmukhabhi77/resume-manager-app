@@ -12,6 +12,7 @@ export default function UploadScreen() {
   const { addResume } = useDB();
   const [name, setName] = useState("");
   const [designation, setDesignation] = useState("");
+  const [experienceLevel, setExperienceLevel] = useState<"fresher" | "experience">("fresher");
   const [selectedFile, setSelectedFile] = useState<{ name: string; size: number; uri: string } | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -23,9 +24,12 @@ export default function UploadScreen() {
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
         const asset = result.assets[0];
+        // Get file info to retrieve size
+        const fileInfo = await FileSystem.getInfoAsync(asset.uri);
+        const fileSize = fileInfo.exists && 'size' in fileInfo ? (fileInfo as any).size : asset.size || 0;
         setSelectedFile({
           name: asset.name || "Resume",
-          size: asset.size || 0,
+          size: fileSize,
           uri: asset.uri,
         });
       }
@@ -52,7 +56,7 @@ export default function UploadScreen() {
 
     try {
       setLoading(true);
-      await addResume(name, designation, selectedFile.uri, selectedFile.size);
+      await addResume(name, designation, experienceLevel, selectedFile.uri, selectedFile.size);
       Alert.alert("Success", "Resume uploaded successfully!");
       router.back();
     } catch (error) {
@@ -97,6 +101,46 @@ export default function UploadScreen() {
               className="bg-white border border-slate-200 rounded-lg px-4 py-3 text-base"
               placeholderTextColor="#999"
             />
+          </View>
+
+          {/* Experience Level Selector */}
+          <View className="gap-2">
+            <Text className="text-sm font-semibold text-slate-700">Experience Level</Text>
+            <View className="flex-row gap-3">
+              <TouchableOpacity
+                onPress={() => setExperienceLevel("fresher")}
+                className={`flex-1 rounded-lg py-3 px-4 items-center border-2 ${
+                  experienceLevel === "fresher"
+                    ? "bg-primary border-primary"
+                    : "bg-white border-slate-200"
+                }`}
+              >
+                <Text
+                  className={`font-semibold text-base ${
+                    experienceLevel === "fresher" ? "text-white" : "text-slate-900"
+                  }`}
+                >
+                  Fresher
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={() => setExperienceLevel("experience")}
+                className={`flex-1 rounded-lg py-3 px-4 items-center border-2 ${
+                  experienceLevel === "experience"
+                    ? "bg-primary border-primary"
+                    : "bg-white border-slate-200"
+                }`}
+              >
+                <Text
+                  className={`font-semibold text-base ${
+                    experienceLevel === "experience" ? "text-white" : "text-slate-900"
+                  }`}
+                >
+                  Experience
+                </Text>
+              </TouchableOpacity>
+            </View>
           </View>
 
           {/* File Picker */}

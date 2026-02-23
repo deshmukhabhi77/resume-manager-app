@@ -5,6 +5,7 @@ import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useDB, Resume } from "@/lib/db-context";
 import { useColors } from "@/hooks/use-colors";
+import { PDFViewerModal } from "@/components/pdf-viewer-modal";
 
 type ListItem = { type: "header" } | { type: "resume"; data: Resume };
 
@@ -13,6 +14,7 @@ export default function HomeScreen() {
   const { resumes, getRecentResumes, loadResumes } = useDB();
   const colors = useColors();
   const [refreshing, setRefreshing] = useState(false);
+  const [selectedPDF, setSelectedPDF] = useState<{ path: string; name: string } | null>(null);
 
   useEffect(() => {
     loadResumes();
@@ -45,6 +47,14 @@ export default function HomeScreen() {
     if (days === 1) return "Yesterday";
     if (days < 7) return `${days}d ago`;
     return new Date(timestamp).toLocaleDateString();
+  };
+
+  const getExperienceBadgeColor = (level: string) => {
+    return level === "fresher" ? "bg-blue-100" : "bg-green-100";
+  };
+
+  const getExperienceBadgeTextColor = (level: string) => {
+    return level === "fresher" ? "text-blue-700" : "text-green-700";
   };
 
   const data: ListItem[] = [{ type: "header" }, ...recentResumes.map((r) => ({ type: "resume" as const, data: r }))];
@@ -130,20 +140,41 @@ export default function HomeScreen() {
           const resume = item.data;
           return (
             <View className="px-4 mb-3">
-              <View className="bg-white rounded-2xl p-4 flex-row items-center gap-4 border border-slate-200">
-                <View className="w-10 h-10 bg-red-50 rounded flex items-center justify-center">
-                  <IconSymbol name="picture_as_pdf" size={24} color="#dc2626" />
+              <TouchableOpacity
+                onPress={() => setSelectedPDF({ path: resume.filePath, name: resume.name })}
+                className="bg-white rounded-2xl p-4 border border-slate-200"
+              >
+                <View className="flex-row items-start gap-4 mb-3">
+                  <View className="w-10 h-10 bg-red-50 rounded flex items-center justify-center">
+                    <IconSymbol name="picture_as_pdf" size={24} color="#dc2626" />
+                  </View>
+                  <View className="flex-1 min-w-0">
+                    <Text className="text-slate-900 text-sm font-semibold truncate">{resume.name}</Text>
+                    <Text className="text-slate-500 text-xs mt-1">{resume.designation}</Text>
+                    <View className="flex-row gap-2 mt-2 items-center">
+                      <View className={`px-2 py-1 rounded ${getExperienceBadgeColor(resume.experienceLevel)}`}>
+                        <Text className={`text-xs font-semibold ${getExperienceBadgeTextColor(resume.experienceLevel)}`}>
+                          {resume.experienceLevel === "fresher" ? "Fresher" : "Experienced"}
+                        </Text>
+                      </View>
+                      <Text className="text-slate-400 text-xs">
+                        Added {formatDate(resume.uploadedAt)} • {formatFileSize(resume.fileSize)}
+                      </Text>
+                    </View>
+                  </View>
                 </View>
-                <View className="flex-1 min-w-0">
-                  <Text className="text-slate-900 text-sm font-semibold truncate">{resume.name}</Text>
-                  <Text className="text-slate-500 text-xs">
-                    Added {formatDate(resume.uploadedAt)} • {formatFileSize(resume.fileSize)}
-                  </Text>
+                <View className="flex-row gap-2">
+                  <TouchableOpacity
+                    onPress={() => setSelectedPDF({ path: resume.filePath, name: resume.name })}
+                    className="flex-1 bg-primary rounded-lg py-2 items-center"
+                  >
+                    <Text className="text-white font-semibold text-sm">View PDF</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity className="px-3 py-2 bg-slate-100 rounded-lg items-center justify-center">
+                    <IconSymbol name="more_vert" size={20} color="#999" />
+                  </TouchableOpacity>
                 </View>
-                <TouchableOpacity>
-                  <IconSymbol name="more_vert" size={24} color="#999" />
-                </TouchableOpacity>
-              </View>
+              </TouchableOpacity>
             </View>
           );
         }}
@@ -174,6 +205,16 @@ export default function HomeScreen() {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         contentContainerStyle={{ paddingBottom: 20 }}
       />
+
+      {/* PDF Viewer Modal */}
+      {selectedPDF && (
+        <PDFViewerModal
+          visible={!!selectedPDF}
+          filePath={selectedPDF.path}
+          fileName={selectedPDF.name}
+          onClose={() => setSelectedPDF(null)}
+        />
+      )}
     </ScreenContainer>
   );
 }

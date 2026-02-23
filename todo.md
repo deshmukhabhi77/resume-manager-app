@@ -68,3 +68,15 @@
 - [ ] Test search functionality
 - [ ] Check for console errors
 - [ ] Create checkpoint before delivery
+
+## New Features - Fresher/Experience Filter & PDF Viewer
+
+- [x] Update Resume interface to include experienceLevel field
+- [x] Update database context to handle experienceLevel
+- [x] Add experience level selector to Upload screen (Fresher/Experience)
+- [x] Implement PDF viewer modal component
+- [x] Add PDF viewer integration to Home screen
+- [x] Add PDF viewer integration to Search screen
+- [ ] Test PDF viewing on iOS and Android
+- [x] Update Home screen to display experience badges
+- [x] Update Search screen to display experience badges
