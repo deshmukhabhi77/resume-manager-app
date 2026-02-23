@@ -47,7 +47,7 @@ export function PDFViewerModal({ visible, filePath, fileName, onClose }: PDFView
     return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + " " + sizes[i];
   };
 
-  const handleOpenPDF = async () => {
+  const handleOpenPDFInBrowser = async () => {
     try {
       setLoading(true);
 
@@ -59,11 +59,12 @@ export function PDFViewerModal({ visible, filePath, fileName, onClose }: PDFView
         return;
       }
 
-      // Try to open with system PDF viewer
+      // Open PDF in browser using file:// URI
+      // The browser will handle PDF rendering
       await WebBrowser.openBrowserAsync(filePath);
     } catch (error) {
       console.error("PDF open error:", error);
-      Alert.alert("Error", "Unable to open PDF. Please try again.");
+      Alert.alert("Error", "Unable to open PDF in browser. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -168,14 +169,14 @@ export function PDFViewerModal({ visible, filePath, fileName, onClose }: PDFView
         {/* Content */}
         <ScrollView contentContainerStyle={{ flexGrow: 1 }} className="flex-1">
           <View className="flex-1 items-center justify-center gap-6 px-4">
-            <View className="w-24 h-24 bg-red-50 rounded-2xl flex items-center justify-center">
-              <IconSymbol name="picture_as_pdf" size={64} color="#dc2626" />
+            <View className="w-24 h-24 bg-blue-50 rounded-2xl flex items-center justify-center">
+              <IconSymbol name="picture_as_pdf" size={64} color="#2563eb" />
             </View>
 
             <View className="items-center gap-2">
               <Text className="text-xl font-bold text-slate-900">Resume Ready</Text>
               <Text className="text-sm text-slate-500 text-center">
-                Tap "View PDF" to open this resume in your default PDF viewer
+                Tap "Open in Browser" to view this resume in your web browser
               </Text>
             </View>
 
@@ -184,10 +185,10 @@ export function PDFViewerModal({ visible, filePath, fileName, onClose }: PDFView
             ) : (
               <View className="w-full gap-3">
                 <TouchableOpacity
-                  onPress={handleOpenPDF}
+                  onPress={handleOpenPDFInBrowser}
                   className="bg-primary rounded-lg py-3 items-center"
                 >
-                  <Text className="text-white font-bold text-base">View PDF</Text>
+                  <Text className="text-white font-bold text-base">Open in Browser</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity

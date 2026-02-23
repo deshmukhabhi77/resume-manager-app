@@ -92,3 +92,14 @@
 - [x] Implement file deletion when resume is deleted
 - [x] Add error handling for file operations
 - [ ] Test file storage on iOS and Android
+
+
+## Storage Permissions & Browser PDF Viewer
+
+- [x] Implement storage permissions request on app startup
+- [x] Create permissions utility module
+- [x] Update root layout to request permissions on mount
+- [x] Implement browser-based PDF viewer using file:// URI
+- [x] Update PDF viewer modal to open PDFs in browser
+- [ ] Add fallback for browsers that don't support file:// URIs
+- [ ] Test permissions on iOS and Android
