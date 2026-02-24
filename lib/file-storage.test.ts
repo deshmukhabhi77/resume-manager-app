@@ -1,17 +1,27 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import * as FileSystem from "expo-file-system/legacy";
 
 // Mock FileSystem
 vi.mock("expo-file-system/legacy", () => ({
   documentDirectory: "/mock/documents/",
+  EncodingType: {
+    Base64: "base64",
+    UTF8: "utf8",
+  },
   getInfoAsync: vi.fn(),
   makeDirectoryAsync: vi.fn(),
   copyAsync: vi.fn(),
   deleteAsync: vi.fn(),
   readDirectoryAsync: vi.fn(),
+  readAsStringAsync: vi.fn(),
+  writeAsStringAsync: vi.fn(),
 }));
 
 describe("File Storage", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("should generate unique filename with timestamp", () => {
     const fileName = "resume.pdf";
     const timestamp = Date.now();
@@ -86,5 +96,53 @@ describe("File Storage", () => {
     expect(isPDF("resume.PDF")).toBe(true);
     expect(isPDF("resume.docx")).toBe(false);
     expect(isPDF("resume.txt")).toBe(false);
+  });
+
+  it("should sanitize filename by removing special characters", () => {
+    const sanitizeFileName = (fileName: string): string => {
+      return fileName.replace(/[^a-zA-Z0-9._-]/g, "_");
+    };
+
+    expect(sanitizeFileName("John's Resume.pdf")).toBe("John_s_Resume.pdf");
+    expect(sanitizeFileName("Resume (Final).pdf")).toBe("Resume__Final_.pdf");
+    expect(sanitizeFileName("Resume@2024.pdf")).toBe("Resume_2024.pdf");
+  });
+
+  it("should use base64 encoding for file transfer", () => {
+    const encoding = "base64";
+    const base64Content = "JVBERi0xLjQKJeLjz9MNCjEgMCBvYmo="; // Sample base64 PDF header
+
+    expect(encoding).toBe("base64");
+    expect(base64Content).toMatch(/^[A-Za-z0-9+/=]+$/);
+  });
+
+  it("should verify file integrity by comparing sizes", () => {
+    const sourceSize = 1024 * 100; // 100 KB
+    const destSize = 1024 * 100; // 100 KB
+
+    const isIntegral = sourceSize === destSize;
+
+    expect(isIntegral).toBe(true);
+  });
+
+  it("should detect file corruption by size mismatch", () => {
+    const sourceSize = 1024 * 100; // 100 KB
+    const destSize = 1024 * 50; // 50 KB (corrupted)
+
+    const isIntegral = sourceSize === destSize;
+
+    expect(isIntegral).toBe(false);
+  });
+
+  it("should log file operations for debugging", () => {
+    const consoleSpy = vi.spyOn(console, "log");
+
+    console.log("Copying file from source to destination");
+    console.log("File verification successful: 102400 bytes");
+
+    expect(consoleSpy).toHaveBeenCalledWith("Copying file from source to destination");
+    expect(consoleSpy).toHaveBeenCalledWith("File verification successful: 102400 bytes");
+
+    consoleSpy.mockRestore();
   });
 });

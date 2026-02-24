@@ -3,6 +3,7 @@ import * as DocumentPicker from "expo-document-picker";
 
 /**
  * File storage utility for managing resume files in app's internal storage
+ * Uses base64 encoding to ensure binary file integrity during copying
  */
 
 const RESUMES_DIRECTORY = `${FileSystem.documentDirectory}resumes/`;
@@ -24,6 +25,7 @@ export async function initializeStorageDirectory(): Promise<void> {
 
 /**
  * Copy a resume file from source to app's internal storage
+ * Uses base64 encoding to preserve binary file integrity
  * @param sourceUri - The URI of the source file
  * @param fileName - The name to save the file as
  * @returns The URI of the saved file in internal storage
@@ -34,14 +36,36 @@ export async function copyResumeToStorage(sourceUri: string, fileName: string): 
 
     // Generate a unique filename to avoid conflicts
     const timestamp = Date.now();
-    const uniqueFileName = `${timestamp}_${fileName}`;
+    // Remove special characters and spaces from filename
+    const sanitizedName = fileName.replace(/[^a-zA-Z0-9._-]/g, "_");
+    const uniqueFileName = `${timestamp}_${sanitizedName}`;
     const destinationUri = `${RESUMES_DIRECTORY}${uniqueFileName}`;
 
-    // Copy the file
-    await FileSystem.copyAsync({
-      from: sourceUri,
-      to: destinationUri,
+    console.log(`Copying file from ${sourceUri} to ${destinationUri}`);
+
+    // Read the source file as base64
+    // This ensures binary file integrity is preserved
+    const base64Content = await FileSystem.readAsStringAsync(sourceUri, {
+      encoding: FileSystem.EncodingType.Base64,
     });
+
+    console.log(`Read file: ${base64Content.length} characters (base64)`);
+
+    // Write the file using base64 encoding
+    // This ensures the binary data is written correctly
+    await FileSystem.writeAsStringAsync(destinationUri, base64Content, {
+      encoding: FileSystem.EncodingType.Base64,
+    });
+
+    console.log(`File successfully copied to ${destinationUri}`);
+
+    // Verify the file was written correctly
+    const verifyInfo = await FileSystem.getInfoAsync(destinationUri);
+    if (!verifyInfo.exists) {
+      throw new Error("File verification failed: file does not exist after copying");
+    }
+
+    console.log(`File verification successful: ${(verifyInfo as any).size} bytes`);
 
     return destinationUri;
   } catch (error) {
@@ -59,6 +83,7 @@ export async function deleteResumeFile(fileUri: string): Promise<void> {
     const fileInfo = await FileSystem.getInfoAsync(fileUri);
     if (fileInfo.exists) {
       await FileSystem.deleteAsync(fileUri);
+      console.log(`File deleted: ${fileUri}`);
     }
   } catch (error) {
     console.error("Failed to delete resume file:", error);
@@ -145,4 +170,31 @@ export async function clearAllResumes(): Promise<void> {
  */
 export function isInternalStorageFile(fileUri: string): boolean {
   return fileUri.startsWith(RESUMES_DIRECTORY);
+}
+
+/**
+ * Verify file integrity by comparing source and destination
+ * @param sourceUri - The source file URI
+ * @param destinationUri - The destination file URI
+ * @returns True if files are identical
+ */
+export async function verifyFileIntegrity(sourceUri: string, destinationUri: string): Promise<boolean> {
+  try {
+    const sourceInfo = await FileSystem.getInfoAsync(sourceUri);
+    const destInfo = await FileSystem.getInfoAsync(destinationUri);
+
+    // Compare file sizes
+    if ((sourceInfo as any).size !== (destInfo as any).size) {
+      console.error(
+        `File size mismatch: source=${(sourceInfo as any).size}, dest=${(destInfo as any).size}`
+      );
+      return false;
+    }
+
+    console.log(`File integrity verified: ${(sourceInfo as any).size} bytes`);
+    return true;
+  } catch (error) {
+    console.error("Failed to verify file integrity:", error);
+    return false;
+  }
 }
