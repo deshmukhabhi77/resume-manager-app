@@ -132,3 +132,12 @@
 - [x] Implement permission retry mechanism
 - [ ] Add permission status to Settings screen
 - [ ] Test permissions on iOS and Android
+
+
+## PDF Viewer Error Fix
+
+- [x] Fix "Unable to open PDF in browser" error
+- [x] Implement system PDF viewer using expo-intent-launcher
+- [x] Add file existence validation before opening
+- [x] Improve error handling and user feedback
+- [ ] Test PDF opening on iOS and Android devices

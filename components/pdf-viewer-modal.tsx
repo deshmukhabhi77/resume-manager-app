@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, TouchableOpacity, ActivityIndicator, Alert, Modal, ScrollView } from "react-native";
 import { IconSymbol } from "./ui/icon-symbol";
-import * as WebBrowser from "expo-web-browser";
 import * as FileSystem from "expo-file-system/legacy";
 import * as Sharing from "expo-sharing";
+import * as IntentLauncher from "expo-intent-launcher";
+import { Platform } from "react-native";
 
 interface PDFViewerModalProps {
   visible: boolean;
@@ -47,7 +48,7 @@ export function PDFViewerModal({ visible, filePath, fileName, onClose }: PDFView
     return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + " " + sizes[i];
   };
 
-  const handleOpenPDFInBrowser = async () => {
+  const handleOpenPDF = async () => {
     try {
       setLoading(true);
 
@@ -59,12 +60,39 @@ export function PDFViewerModal({ visible, filePath, fileName, onClose }: PDFView
         return;
       }
 
-      // Open PDF in browser using file:// URI
-      // The browser will handle PDF rendering
-      await WebBrowser.openBrowserAsync(filePath);
+      // Open PDF using system PDF viewer
+      if (Platform.OS === "android") {
+        try {
+          // On Android, use IntentLauncher to open with system PDF viewer
+          await IntentLauncher.startActivityAsync("android.intent.action.VIEW", {
+            data: filePath,
+            flags: 1,
+          });
+        } catch (androidError) {
+          console.error("Android intent error:", androidError);
+          // Fallback: try to open with file:// URI
+          await Sharing.shareAsync(filePath, {
+            mimeType: "application/pdf",
+            dialogTitle: `Open ${fileName}`,
+          });
+        }
+      } else if (Platform.OS === "ios") {
+        // On iOS, use Sharing to open with system PDF viewer
+        await Sharing.shareAsync(filePath, {
+          mimeType: "application/pdf",
+          dialogTitle: `Open ${fileName}`,
+          UTI: "com.adobe.pdf",
+        });
+      } else {
+        // Web fallback
+        Alert.alert("Info", "PDF viewing is not available on web. Please use the Share option.");
+      }
     } catch (error) {
       console.error("PDF open error:", error);
-      Alert.alert("Error", "Unable to open PDF in browser. Please try again.");
+      Alert.alert(
+        "Error",
+        "Unable to open PDF. Please try sharing the file instead or check if a PDF viewer is installed on your device."
+      );
     } finally {
       setLoading(false);
     }
@@ -176,7 +204,7 @@ export function PDFViewerModal({ visible, filePath, fileName, onClose }: PDFView
             <View className="items-center gap-2">
               <Text className="text-xl font-bold text-slate-900">Resume Ready</Text>
               <Text className="text-sm text-slate-500 text-center">
-                Tap "Open in Browser" to view this resume in your web browser
+                Tap "Open PDF" to view this resume with your device's PDF viewer
               </Text>
             </View>
 
@@ -185,10 +213,10 @@ export function PDFViewerModal({ visible, filePath, fileName, onClose }: PDFView
             ) : (
               <View className="w-full gap-3">
                 <TouchableOpacity
-                  onPress={handleOpenPDFInBrowser}
+                  onPress={handleOpenPDF}
                   className="bg-primary rounded-lg py-3 items-center"
                 >
-                  <Text className="text-white font-bold text-base">Open in Browser</Text>
+                  <Text className="text-white font-bold text-base">Open PDF</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
