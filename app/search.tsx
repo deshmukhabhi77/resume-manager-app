@@ -94,10 +94,7 @@ export default function SearchScreen() {
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <View className="px-4 mb-3">
-            <TouchableOpacity
-              onPress={() => setSelectedPDF({ path: item.filePath, name: item.name })}
-              className="bg-white rounded-2xl p-4 border border-slate-200"
-            >
+            <View className="bg-white rounded-2xl p-4 border border-slate-200">
               <View className="flex-row items-start gap-4 mb-3">
                 <View className="w-10 h-10 bg-blue-50 rounded flex items-center justify-center">
                   <IconSymbol name="description" size={24} color="#2563eb" />
@@ -123,7 +120,7 @@ export default function SearchScreen() {
               >
                 <Text className="text-white font-semibold text-sm">View PDF</Text>
               </TouchableOpacity>
-            </TouchableOpacity>
+            </View>
           </View>
         )}
         scrollEnabled={true}

@@ -140,10 +140,7 @@ export default function HomeScreen() {
           const resume = item.data;
           return (
             <View className="px-4 mb-3">
-              <TouchableOpacity
-                onPress={() => setSelectedPDF({ path: resume.filePath, name: resume.name })}
-                className="bg-white rounded-2xl p-4 border border-slate-200"
-              >
+              <View className="bg-white rounded-2xl p-4 border border-slate-200">
                 <View className="flex-row items-start gap-4 mb-3">
                   <View className="w-10 h-10 bg-red-50 rounded flex items-center justify-center">
                     <IconSymbol name="picture_as_pdf" size={24} color="#dc2626" />
@@ -174,7 +171,7 @@ export default function HomeScreen() {
                     <IconSymbol name="more_vert" size={20} color="#999" />
                   </TouchableOpacity>
                 </View>
-              </TouchableOpacity>
+              </View>
             </View>
           );
         }}
