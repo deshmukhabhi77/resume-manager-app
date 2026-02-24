@@ -66,11 +66,16 @@ export async function requestAllPermissions(): Promise<boolean> {
     if (!mediaLibraryGranted) {
       Alert.alert(
         "Storage Permission Required",
-        "Resume Manager needs access to your device storage to save and manage resumes. Please enable storage permissions in Settings.",
+        "Resume Manager needs access to your device storage to save and manage resumes. Without this permission, you won't be able to upload or view resumes.\n\nPlease enable storage permissions in Settings.",
         [
           {
-            text: "OK",
+            text: "Cancel",
             onPress: () => console.log("Permission denied"),
+            style: "cancel",
+          },
+          {
+            text: "OK",
+            onPress: () => console.log("Permission alert acknowledged"),
           },
         ]
       );
@@ -80,9 +85,45 @@ export async function requestAllPermissions(): Promise<boolean> {
     return true;
   } catch (error) {
     console.error("Error requesting permissions:", error);
-    Alert.alert("Error", "Failed to request permissions. Please try again.");
+    Alert.alert(
+      "Permission Error",
+      "Failed to request permissions. Please try again or check your device settings.",
+      [
+        {
+          text: "OK",
+          onPress: () => console.log("Error acknowledged"),
+        },
+      ]
+    );
     return false;
   }
+}
+
+/**
+ * Retry permission request with user confirmation
+ * Useful when user initially denied permissions
+ */
+export async function retryPermissionRequest(): Promise<boolean> {
+  return new Promise((resolve) => {
+    Alert.alert(
+      "Enable Storage Access",
+      "Resume Manager requires storage access to function properly. Would you like to try enabling permissions again?",
+      [
+        {
+          text: "Not Now",
+          onPress: () => resolve(false),
+          style: "cancel",
+        },
+        {
+          text: "Enable",
+          onPress: async () => {
+            const granted = await requestMediaLibraryPermission();
+            resolve(granted);
+          },
+        },
+      ]
+    );
+  });
 }
 
 /**

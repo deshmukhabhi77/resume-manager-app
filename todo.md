@@ -112,3 +112,23 @@
 - [x] Update PDF viewer modal to open PDFs in browser
 - [ ] Add fallback for browsers that don't support file:// URIs
 - [ ] Test permissions on iOS and Android
+
+
+## Resume Deletion Feature
+
+- [x] Add deleteResume method to database context
+- [x] Implement file deletion when resume is deleted
+- [x] Add delete button/menu to Home screen resume cards
+- [x] Add delete button/menu to Search screen resume cards
+- [x] Implement confirmation dialog for deletion
+- [x] Add success/error feedback for deletion
+- [ ] Test deletion on iOS and Android
+
+## Improved Storage Permissions
+
+- [x] Enhance permission request with user-friendly alerts
+- [x] Show permission denied alert with instructions
+- [x] Add permission status check on app startup
+- [x] Implement permission retry mechanism
+- [ ] Add permission status to Settings screen
+- [ ] Test permissions on iOS and Android

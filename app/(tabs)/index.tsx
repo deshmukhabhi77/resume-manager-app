@@ -1,4 +1,4 @@
-import { ScrollView, Text, View, TouchableOpacity, FlatList, RefreshControl } from "react-native";
+import { ScrollView, Text, View, TouchableOpacity, FlatList, RefreshControl, Alert } from "react-native";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { ScreenContainer } from "@/components/screen-container";
@@ -11,10 +11,11 @@ type ListItem = { type: "header" } | { type: "resume"; data: Resume };
 
 export default function HomeScreen() {
   const router = useRouter();
-  const { resumes, getRecentResumes, loadResumes } = useDB();
+  const { resumes, getRecentResumes, loadResumes, deleteResume } = useDB();
   const colors = useColors();
   const [refreshing, setRefreshing] = useState(false);
   const [selectedPDF, setSelectedPDF] = useState<{ path: string; name: string } | null>(null);
+  const [deleting, setDeleting] = useState<string | null>(null);
 
   useEffect(() => {
     loadResumes();
@@ -26,6 +27,35 @@ export default function HomeScreen() {
     setRefreshing(true);
     await loadResumes();
     setRefreshing(false);
+  };
+
+  const handleDeleteResume = (id: string, name: string) => {
+    Alert.alert(
+      "Delete Resume",
+      `Are you sure you want to delete "${name}"? This action cannot be undone.`,
+      [
+        {
+          text: "Cancel",
+          onPress: () => {},
+          style: "cancel",
+        },
+        {
+          text: "Delete",
+          onPress: async () => {
+            try {
+              setDeleting(id);
+              await deleteResume(id);
+              Alert.alert("Success", "Resume deleted successfully");
+            } catch (error) {
+              Alert.alert("Error", "Failed to delete resume");
+            } finally {
+              setDeleting(null);
+            }
+          },
+          style: "destructive",
+        },
+      ]
+    );
   };
 
   const formatFileSize = (bytes: number) => {
@@ -167,8 +197,12 @@ export default function HomeScreen() {
                   >
                     <Text className="text-white font-semibold text-sm">View PDF</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity className="px-3 py-2 bg-slate-100 rounded-lg items-center justify-center">
-                    <IconSymbol name="more_vert" size={20} color="#999" />
+                  <TouchableOpacity
+                    onPress={() => handleDeleteResume(resume.id, resume.name)}
+                    disabled={deleting === resume.id}
+                    className="px-3 py-2 bg-red-50 rounded-lg items-center justify-center"
+                  >
+                    <IconSymbol name="delete" size={20} color={deleting === resume.id ? "#ccc" : "#ef4444"} />
                   </TouchableOpacity>
                 </View>
               </View>

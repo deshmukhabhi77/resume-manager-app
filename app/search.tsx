@@ -1,4 +1,4 @@
-import { ScrollView, Text, View, TouchableOpacity, TextInput, FlatList } from "react-native";
+import { ScrollView, Text, View, TouchableOpacity, TextInput, FlatList, Alert } from "react-native";
 import { useRouter } from "expo-router";
 import { useState, useMemo, useEffect } from "react";
 import { ScreenContainer } from "@/components/screen-container";
@@ -9,11 +9,12 @@ import { PDFViewerModal } from "@/components/pdf-viewer-modal";
 
 export default function SearchScreen() {
   const router = useRouter();
-  const { searchResumes, loadResumes } = useDB();
+  const { searchResumes, loadResumes, deleteResume } = useDB();
   const colors = useColors();
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [selectedPDF, setSelectedPDF] = useState<{ path: string; name: string } | null>(null);
+  const [deleting, setDeleting] = useState<string | null>(null);
 
   useEffect(() => {
     loadResumes();
@@ -31,6 +32,35 @@ export default function SearchScreen() {
   const results = useMemo(() => {
     return searchResumes(debouncedQuery);
   }, [debouncedQuery, searchResumes]);
+
+  const handleDeleteResume = (id: string, name: string) => {
+    Alert.alert(
+      "Delete Resume",
+      `Are you sure you want to delete "${name}"? This action cannot be undone.`,
+      [
+        {
+          text: "Cancel",
+          onPress: () => {},
+          style: "cancel",
+        },
+        {
+          text: "Delete",
+          onPress: async () => {
+            try {
+              setDeleting(id);
+              await deleteResume(id);
+              Alert.alert("Success", "Resume deleted successfully");
+            } catch (error) {
+              Alert.alert("Error", "Failed to delete resume");
+            } finally {
+              setDeleting(null);
+            }
+          },
+          style: "destructive",
+        },
+      ]
+    );
+  };
 
   const formatFileSize = (bytes: number) => {
     if (bytes === 0) return "0 B";
@@ -114,12 +144,21 @@ export default function SearchScreen() {
                   </View>
                 </View>
               </View>
-              <TouchableOpacity
-                onPress={() => setSelectedPDF({ path: item.filePath, name: item.name })}
-                className="bg-primary rounded-lg py-2 items-center"
-              >
-                <Text className="text-white font-semibold text-sm">View PDF</Text>
-              </TouchableOpacity>
+              <View className="flex-row gap-2">
+                <TouchableOpacity
+                  onPress={() => setSelectedPDF({ path: item.filePath, name: item.name })}
+                  className="flex-1 bg-primary rounded-lg py-2 items-center"
+                >
+                  <Text className="text-white font-semibold text-sm">View PDF</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => handleDeleteResume(item.id, item.name)}
+                  disabled={deleting === item.id}
+                  className="px-3 py-2 bg-red-50 rounded-lg items-center justify-center"
+                >
+                  <IconSymbol name="delete" size={20} color={deleting === item.id ? "#ccc" : "#ef4444"} />
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
         )}

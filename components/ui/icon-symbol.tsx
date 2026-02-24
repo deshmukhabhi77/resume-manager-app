@@ -26,6 +26,7 @@ const MAPPING = {
   "picture_as_pdf": "picture-as-pdf",
   "more_vert": "more-vert",
   "lightbulb": "lightbulb",
+  "delete": "delete",
 } as const;
 
 type IconSymbolName = keyof typeof MAPPING;
