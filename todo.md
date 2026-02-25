@@ -159,3 +159,11 @@
 - [x] Ensure PDFs save with correct format
 - [x] Test PDF opening from internal storage
 - [x] Verify full offline functionality
+
+
+## Chrome PDF Viewer Integration
+
+- [x] Update PDF viewer to open PDFs in Google Chrome
+- [x] Implement Chrome package detection
+- [x] Add fallback to system PDF viewer if Chrome not installed
+- [x] Test PDF opening in Chrome on Android

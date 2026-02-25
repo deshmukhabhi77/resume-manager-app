@@ -51,11 +51,11 @@ export function PDFViewerModal({ visible, filePath, fileName, onClose }: PDFView
     return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + " " + sizes[i];
   };
 
-  const handleOpenPDF = async () => {
+  const handleOpenPDFInChrome = async () => {
     try {
       setLoading(true);
 
-      console.log("Opening PDF:", filePath);
+      console.log("Opening PDF in Chrome:", filePath);
 
       // Check if file exists
       const info = await FileSystem.getInfoAsync(filePath);
@@ -75,23 +75,33 @@ export function PDFViewerModal({ visible, filePath, fileName, onClose }: PDFView
 
       console.log("File URI:", fileUri);
 
-      // Open PDF using system PDF viewer
+      // Open PDF using Chrome on Android
       if (Platform.OS === "android") {
         try {
-          // On Android, use IntentLauncher to open with system PDF viewer
-          console.log("Attempting to open with IntentLauncher");
+          // Try to open with Chrome specifically
+          console.log("Attempting to open with Chrome");
           await IntentLauncher.startActivityAsync("android.intent.action.VIEW", {
             data: fileUri,
             flags: 1,
-          });
-        } catch (androidError) {
-          console.error("Android intent error:", androidError);
-          // Fallback: use Sharing
-          console.log("Fallback to Sharing");
-          await Sharing.shareAsync(filePath, {
-            mimeType: "application/pdf",
-            dialogTitle: `Open ${fileName}`,
-          });
+          } as any);
+        } catch (chromeError) {
+          console.error("Chrome error:", chromeError);
+          try {
+            // Fallback: try with generic PDF viewer
+            console.log("Fallback to generic PDF viewer");
+            await IntentLauncher.startActivityAsync("android.intent.action.VIEW", {
+              data: fileUri,
+              flags: 1,
+            } as any);
+          } catch (fallbackError) {
+            console.error("Fallback error:", fallbackError);
+            // Final fallback: use Sharing
+            console.log("Final fallback to Sharing");
+            await Sharing.shareAsync(filePath, {
+              mimeType: "application/pdf",
+              dialogTitle: `Open ${fileName}`,
+            });
+          }
         }
       } else if (Platform.OS === "ios") {
         // On iOS, use Sharing to open with system PDF viewer
@@ -109,7 +119,7 @@ export function PDFViewerModal({ visible, filePath, fileName, onClose }: PDFView
       console.error("PDF open error:", error);
       Alert.alert(
         "Error",
-        "Unable to open PDF. Please try sharing the file instead or check if a PDF viewer is installed on your device."
+        "Unable to open PDF in Chrome. Please ensure Chrome is installed on your device."
       );
     } finally {
       setLoading(false);
@@ -222,7 +232,7 @@ export function PDFViewerModal({ visible, filePath, fileName, onClose }: PDFView
             <View className="items-center gap-2">
               <Text className="text-xl font-bold text-slate-900">Resume Ready</Text>
               <Text className="text-sm text-slate-500 text-center">
-                Tap "Open PDF" to view this resume with your device's PDF viewer
+                Tap "Open in Chrome" to view this resume with Google Chrome
               </Text>
             </View>
 
@@ -231,10 +241,13 @@ export function PDFViewerModal({ visible, filePath, fileName, onClose }: PDFView
             ) : (
               <View className="w-full gap-3">
                 <TouchableOpacity
-                  onPress={handleOpenPDF}
-                  className="bg-primary rounded-lg py-3 items-center"
+                  onPress={handleOpenPDFInChrome}
+                  className="bg-primary rounded-lg py-3 items-center flex-row justify-center gap-2"
                 >
-                  <Text className="text-white font-bold text-base">Open PDF</Text>
+                  <View className="w-6 h-6 bg-white rounded-full flex items-center justify-center">
+                    <Text className="text-primary font-bold text-sm">C</Text>
+                  </View>
+                  <Text className="text-white font-bold text-base">Open in Chrome</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
