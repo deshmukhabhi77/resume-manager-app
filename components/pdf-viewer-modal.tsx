@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, TouchableOpacity, ActivityIndicator, Alert, Modal, ScrollView } from "react-native";
+import { View, Text, TouchableOpacity, ActivityIndicator, Alert, Modal, ScrollView, Platform } from "react-native";
 import { IconSymbol } from "./ui/icon-symbol";
 import * as FileSystem from "expo-file-system/legacy";
 import * as Sharing from "expo-sharing";
-import * as IntentLauncher from "expo-intent-launcher";
-import { Platform } from "react-native";
+import * as WebBrowser from "expo-web-browser";
+
+// Warm up browser for faster loading
+WebBrowser.warmUpAsync().catch(() => {});
 
 interface PDFViewerModalProps {
   visible: boolean;
@@ -78,39 +80,39 @@ export function PDFViewerModal({ visible, filePath, fileName, onClose }: PDFView
       // Open PDF using Chrome on Android
       if (Platform.OS === "android") {
         try {
-          // Try to open with Chrome specifically
-          console.log("Attempting to open with Chrome");
-          await IntentLauncher.startActivityAsync("android.intent.action.VIEW", {
-            data: fileUri,
-            flags: 1,
-          } as any);
-        } catch (chromeError) {
-          console.error("Chrome error:", chromeError);
-          try {
-            // Fallback: try with generic PDF viewer
-            console.log("Fallback to generic PDF viewer");
-            await IntentLauncher.startActivityAsync("android.intent.action.VIEW", {
-              data: fileUri,
-              flags: 1,
-            } as any);
-          } catch (fallbackError) {
-            console.error("Fallback error:", fallbackError);
-            // Final fallback: use Sharing
-            console.log("Final fallback to Sharing");
-            await Sharing.shareAsync(filePath, {
-              mimeType: "application/pdf",
-              dialogTitle: `Open ${fileName}`,
-            });
-          }
+          // Use WebBrowser to open PDF in Chrome
+          console.log("Opening with WebBrowser");
+          await WebBrowser.openBrowserAsync(fileUri, {
+            toolbarColor: "#19217b",
+            enableBarCollapsing: true,
+            showTitle: true,
+          });
+        } catch (browserError) {
+          console.error("WebBrowser error:", browserError);
+          // Fallback to sharing
+          console.log("Fallback to Sharing");
+          await Sharing.shareAsync(filePath, {
+            mimeType: "application/pdf",
+            dialogTitle: `Open ${fileName}`,
+          });
         }
       } else if (Platform.OS === "ios") {
-        // On iOS, use Sharing to open with system PDF viewer
-        console.log("Opening with Sharing on iOS");
-        await Sharing.shareAsync(filePath, {
-          mimeType: "application/pdf",
-          dialogTitle: `Open ${fileName}`,
-          UTI: "com.adobe.pdf",
-        });
+        try {
+          // Use WebBrowser on iOS
+          console.log("Opening with WebBrowser on iOS");
+          await WebBrowser.openBrowserAsync(fileUri, {
+            toolbarColor: "#19217b",
+          });
+        } catch (browserError) {
+          console.error("WebBrowser error:", browserError);
+          // Fallback to sharing
+          console.log("Fallback to Sharing");
+          await Sharing.shareAsync(filePath, {
+            mimeType: "application/pdf",
+            dialogTitle: `Open ${fileName}`,
+            UTI: "com.adobe.pdf",
+          });
+        }
       } else {
         // Web fallback
         Alert.alert("Info", "PDF viewing is not available on web. Please use the Share option.");
@@ -119,7 +121,7 @@ export function PDFViewerModal({ visible, filePath, fileName, onClose }: PDFView
       console.error("PDF open error:", error);
       Alert.alert(
         "Error",
-        "Unable to open PDF in Chrome. Please ensure Chrome is installed on your device."
+        "Unable to open PDF. Please ensure you have a PDF viewer app installed."
       );
     } finally {
       setLoading(false);
