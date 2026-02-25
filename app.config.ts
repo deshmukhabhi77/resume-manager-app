@@ -32,7 +32,7 @@ const env = {
   appSlug: "resume-manager-app",
   // S3 URL of the app logo - set this to the URL returned by generate_image when creating custom logo
   // Leave empty to use the default icon from assets/images/icon.png
-  logoUrl: "https://private-us-east-1.manuscdn.com/sessionFile/TKr6kmTsqVO0GUtCR6ERBg/sandbox/B3ptRTaq6FNBFkwARfnu7z-img-1_1771734077000_na1fn_aWNvbg.png?x-oss-process=image/resize,w_1920,h_1920/format,webp/quality,q_80&Expires=1798761600&Policy=eyJTdGF0ZW1lbnQiOlt7IlJlc291cmNlIjoiaHR0cHM6Ly9wcml2YXRlLXVzLWVhc3QtMS5tYW51c2Nkbi5jb20vc2Vzc2lvbkZpbGUvVEtyNmttVHNxVk8wR1V0Q1I2RVJCZy9zYW5kYm94L0IzcHRSVGFxNkZOQkZrd0FSZm51N3otaW1nLTFfMTc3MTczNDA3NzAwMF9uYTFmbl9hV052YmcucG5nP3gtb3NzLXByb2Nlc3M9aW1hZ2UvcmVzaXplLHdfMTkyMCxoXzE5MjAvZm9ybWF0LHdlYnAvcXVhbGl0eSxxXzgwIiwiQ29uZGl0aW9uIjp7IkRhdGVMZXNzVGhhbiI6eyJBV1M6RXBvY2hUaW1lIjoxNzk4NzYxNjAwfX19XX0_&Key-Pair-Id=K2HSFNDJXOU9YS&Signature=a07xRuzUSl93sWUTyGGiHGohFN1eOZAA2OwSv4sQji0z~pd1F3hTgzaCBdyVxqaTEVE8kOcnAMZLd9Y2RkRAyLotYe2-6Jvh4lnjPMFWTfb47vY6YIYybjOxtT6ewvXFyLJE6efHRDo0XnlOpOncWWwjsSR5-WCcasaEdPw3nH~1GX5nvAsAwZ1Su3Wz8fqV5DUVFKaa9ygKCEgJVYMcHxCw4zk9-Gj-fvptwnUdy0DgrQuCI~tkD0Lu3BCSfBe86QSzftCG1ukxz88JrkQcx3w~EvIwOzZg5g2rJ2J3PIXU9C-MIDroPhO5cjnkrM8IVSx-FNMFb83c10dHOHZwBA__",
+  logoUrl: "",
   scheme: schemeFromBundleId,
   iosBundleId: bundleId,
   androidPackage: bundleId,
