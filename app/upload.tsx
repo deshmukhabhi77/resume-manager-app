@@ -1,4 +1,4 @@
-import { ScrollView, Text, View, TouchableOpacity, TextInput, Alert } from "react-native";
+import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert, ActivityIndicator } from "react-native";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import { ScreenContainer } from "@/components/screen-container";
@@ -19,21 +19,37 @@ export default function UploadScreen() {
   const pickFile = async () => {
     try {
       const result = await DocumentPicker.getDocumentAsync({
-        type: ["application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "image/*"],
+        type: ["application/pdf"], // PDF files only
       });
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
         const asset = result.assets[0];
+        
+        // Validate that it's a PDF file
+        if (!asset.name?.toLowerCase().endsWith(".pdf")) {
+          Alert.alert("Invalid File", "Please select a PDF file only");
+          return;
+        }
+
         // Get file info to retrieve size
         const fileInfo = await FileSystem.getInfoAsync(asset.uri);
-        const fileSize = fileInfo.exists && 'size' in fileInfo ? (fileInfo as any).size : asset.size || 0;
+        const fileSize = fileInfo.exists && "size" in fileInfo ? (fileInfo as any).size : asset.size || 0;
+
+        // Validate file size (max 50MB)
+        const maxSize = 50 * 1024 * 1024; // 50MB
+        if (fileSize > maxSize) {
+          Alert.alert("File Too Large", "Please select a PDF file smaller than 50MB");
+          return;
+        }
+
         setSelectedFile({
-          name: asset.name || "Resume",
+          name: asset.name || "Resume.pdf",
           size: fileSize,
           uri: asset.uri,
         });
       }
     } catch (error) {
+      console.error("File picker error:", error);
       Alert.alert("Error", "Failed to pick file");
     }
   };
@@ -50,20 +66,45 @@ export default function UploadScreen() {
     }
 
     if (!selectedFile) {
-      Alert.alert("Validation", "Please select a resume file");
+      Alert.alert("Validation", "Please select a PDF resume file");
       return;
     }
 
     try {
       setLoading(true);
+      
+      // Validate file exists before saving
+      const fileInfo = await FileSystem.getInfoAsync(selectedFile.uri);
+      if (!fileInfo.exists) {
+        Alert.alert("Error", "Selected file no longer exists");
+        setSelectedFile(null);
+        return;
+      }
+
       await addResume(name, designation, experienceLevel, selectedFile.uri, selectedFile.size);
       Alert.alert("Success", "Resume uploaded successfully!");
+      
+      // Reset form
+      setName("");
+      setDesignation("");
+      setExperienceLevel("fresher");
+      setSelectedFile(null);
+      
       router.back();
     } catch (error) {
-      Alert.alert("Error", "Failed to save resume");
+      console.error("Save error:", error);
+      Alert.alert("Error", "Failed to save resume. Please try again.");
     } finally {
       setLoading(false);
     }
+  };
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes === 0) return "0 B";
+    const k = 1024;
+    const sizes = ["B", "KB", "MB"];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + " " + sizes[i];
   };
 
   return (
@@ -78,46 +119,49 @@ export default function UploadScreen() {
         </View>
 
         {/* Form Content */}
-        <View className="flex-1 p-4 gap-6">
+        <View className="flex-1 px-4 py-6 gap-6">
           {/* Full Name Input */}
           <View className="gap-2">
-            <Text className="text-sm font-semibold text-slate-700">Full Name</Text>
+            <Text className="text-sm font-semibold text-foreground">Full Name *</Text>
             <TextInput
               placeholder="Enter your full name"
               value={name}
               onChangeText={setName}
-              className="bg-white border border-slate-200 rounded-lg px-4 py-3 text-base"
-              placeholderTextColor="#999"
+              placeholderTextColor="#9BA1A6"
+              className="border border-border rounded-lg px-4 py-3 text-foreground bg-surface"
+              editable={!loading}
             />
           </View>
 
           {/* Designation Input */}
           <View className="gap-2">
-            <Text className="text-sm font-semibold text-slate-700">Designation</Text>
+            <Text className="text-sm font-semibold text-foreground">Designation *</Text>
             <TextInput
-              placeholder="e.g., Senior Developer, Product Manager"
+              placeholder="e.g., Software Engineer, Product Manager"
               value={designation}
               onChangeText={setDesignation}
-              className="bg-white border border-slate-200 rounded-lg px-4 py-3 text-base"
-              placeholderTextColor="#999"
+              placeholderTextColor="#9BA1A6"
+              className="border border-border rounded-lg px-4 py-3 text-foreground bg-surface"
+              editable={!loading}
             />
           </View>
 
-          {/* Experience Level Selector */}
+          {/* Experience Level Selection */}
           <View className="gap-2">
-            <Text className="text-sm font-semibold text-slate-700">Experience Level</Text>
+            <Text className="text-sm font-semibold text-foreground">Experience Level *</Text>
             <View className="flex-row gap-3">
               <TouchableOpacity
                 onPress={() => setExperienceLevel("fresher")}
-                className={`flex-1 rounded-lg py-3 px-4 items-center border-2 ${
+                disabled={loading}
+                className={`flex-1 rounded-lg py-3 items-center border-2 ${
                   experienceLevel === "fresher"
-                    ? "bg-primary border-primary"
-                    : "bg-white border-slate-200"
+                    ? "border-primary bg-blue-50"
+                    : "border-border bg-surface"
                 }`}
               >
                 <Text
-                  className={`font-semibold text-base ${
-                    experienceLevel === "fresher" ? "text-white" : "text-slate-900"
+                  className={`font-semibold ${
+                    experienceLevel === "fresher" ? "text-primary" : "text-muted"
                   }`}
                 >
                   Fresher
@@ -126,66 +170,97 @@ export default function UploadScreen() {
 
               <TouchableOpacity
                 onPress={() => setExperienceLevel("experience")}
-                className={`flex-1 rounded-lg py-3 px-4 items-center border-2 ${
+                disabled={loading}
+                className={`flex-1 rounded-lg py-3 items-center border-2 ${
                   experienceLevel === "experience"
-                    ? "bg-primary border-primary"
-                    : "bg-white border-slate-200"
+                    ? "border-primary bg-blue-50"
+                    : "border-border bg-surface"
                 }`}
               >
                 <Text
-                  className={`font-semibold text-base ${
-                    experienceLevel === "experience" ? "text-white" : "text-slate-900"
+                  className={`font-semibold ${
+                    experienceLevel === "experience" ? "text-primary" : "text-muted"
                   }`}
                 >
-                  Experience
+                  Experienced
                 </Text>
               </TouchableOpacity>
             </View>
           </View>
 
-          {/* File Picker */}
+          {/* File Picker Section */}
           <View className="gap-2">
-            <Text className="text-sm font-semibold text-slate-700">Resume File</Text>
+            <Text className="text-sm font-semibold text-foreground">Resume PDF File *</Text>
+            
+            {selectedFile ? (
+              <View className="bg-blue-50 border border-blue-200 rounded-lg p-4 gap-3">
+                <View className="flex-row items-center gap-3">
+                  <View className="w-12 h-12 bg-primary rounded-lg items-center justify-center">
+                    <IconSymbol name="picture_as_pdf" size={24} color="white" />
+                  </View>
+                  <View className="flex-1">
+                    <Text className="font-semibold text-foreground truncate">{selectedFile.name}</Text>
+                    <Text className="text-xs text-muted">{formatFileSize(selectedFile.size)}</Text>
+                  </View>
+                </View>
+                <TouchableOpacity
+                  onPress={() => setSelectedFile(null)}
+                  disabled={loading}
+                  className="bg-white border border-blue-200 rounded-lg py-2 items-center"
+                >
+                  <Text className="text-blue-700 font-semibold">Change File</Text>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <TouchableOpacity
+                onPress={pickFile}
+                disabled={loading}
+                className="border-2 border-dashed border-primary rounded-lg p-6 items-center gap-2 bg-blue-50"
+              >
+                <IconSymbol name="picture_as_pdf" size={32} color="#19217b" />
+                <Text className="text-primary font-semibold">Select PDF Resume</Text>
+                <Text className="text-xs text-muted text-center">Tap to choose a PDF file from your device</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+
+          {/* Info Box */}
+          <View className="bg-green-50 border border-green-200 rounded-lg p-3 gap-2">
+            <View className="flex-row items-center gap-2">
+              <Text className="text-lg font-bold text-green-600">✓</Text>
+              <Text className="text-xs text-green-800 font-semibold flex-1">PDF files only</Text>
+            </View>
+            <Text className="text-xs text-green-700">
+              Your resume will be saved securely in the app's internal storage and can be accessed anytime.
+            </Text>
+          </View>
+
+          {/* Action Buttons */}
+          <View className="gap-3 mt-auto">
             <TouchableOpacity
-              onPress={pickFile}
-              className="bg-white border-2 border-dashed border-slate-300 rounded-lg p-6 items-center gap-3"
+              onPress={handleSave}
+              disabled={loading || !name.trim() || !designation.trim() || !selectedFile}
+              className={`rounded-lg py-4 items-center ${
+                loading || !name.trim() || !designation.trim() || !selectedFile
+                  ? "bg-slate-300"
+                  : "bg-primary"
+              }`}
             >
-              <IconSymbol name="cloud_upload" size={40} color="#19217b" />
-              {selectedFile ? (
-                <View className="items-center">
-                  <Text className="text-base font-semibold text-slate-900">{selectedFile.name}</Text>
-                  <Text className="text-sm text-slate-500 mt-1">
-                    {Math.round(selectedFile.size / 1024)} KB
-                  </Text>
-                </View>
+              {loading ? (
+                <ActivityIndicator color="white" />
               ) : (
-                <View className="items-center">
-                  <Text className="text-base font-semibold text-slate-900">Tap to select file</Text>
-                  <Text className="text-sm text-slate-500 mt-1">PDF, DOCX, or Image</Text>
-                </View>
+                <Text className="text-white font-bold text-base">Save Resume</Text>
               )}
             </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={() => router.back()}
+              disabled={loading}
+              className="border border-border rounded-lg py-4 items-center bg-surface"
+            >
+              <Text className="text-foreground font-semibold">Cancel</Text>
+            </TouchableOpacity>
           </View>
-        </View>
-
-        {/* Action Buttons */}
-        <View className="px-4 py-4 gap-3 border-t border-slate-200">
-          <TouchableOpacity
-            onPress={handleSave}
-            disabled={loading}
-            className="bg-primary rounded-lg py-3 items-center"
-          >
-            <Text className="text-white font-bold text-base">
-              {loading ? "Saving..." : "Save Resume"}
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={() => router.back()}
-            className="bg-white border border-slate-200 rounded-lg py-3 items-center"
-          >
-            <Text className="text-slate-900 font-semibold text-base">Cancel</Text>
-          </TouchableOpacity>
         </View>
       </ScrollView>
     </ScreenContainer>

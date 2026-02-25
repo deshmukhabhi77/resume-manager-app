@@ -150,3 +150,12 @@
 - [x] Use base64 encoding for file transfer
 - [x] Verify file integrity after copying
 - [x] Test with various PDF file sizes
+
+
+## PDF-Only Upload & Offline Fixes
+
+- [x] Restrict file picker to PDF files only
+- [x] Fix PDF file copying without corruption
+- [x] Ensure PDFs save with correct format
+- [x] Test PDF opening from internal storage
+- [x] Verify full offline functionality

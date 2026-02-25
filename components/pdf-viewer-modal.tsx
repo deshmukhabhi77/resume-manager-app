@@ -25,14 +25,17 @@ export function PDFViewerModal({ visible, filePath, fileName, onClose }: PDFView
 
   const checkFileExists = async () => {
     try {
+      console.log("Checking file exists:", filePath);
       const info = await FileSystem.getInfoAsync(filePath);
       if (info.exists) {
         setFileInfo({
           exists: true,
           size: (info as any).size || 0,
         });
+        console.log("File exists, size:", (info as any).size);
       } else {
         setFileInfo({ exists: false, size: 0 });
+        console.log("File does not exist");
       }
     } catch (error) {
       console.error("Error checking file:", error);
@@ -52,6 +55,8 @@ export function PDFViewerModal({ visible, filePath, fileName, onClose }: PDFView
     try {
       setLoading(true);
 
+      console.log("Opening PDF:", filePath);
+
       // Check if file exists
       const info = await FileSystem.getInfoAsync(filePath);
       if (!info.exists) {
@@ -60,17 +65,29 @@ export function PDFViewerModal({ visible, filePath, fileName, onClose }: PDFView
         return;
       }
 
+      console.log("File exists, size:", (info as any).size);
+
+      // Convert file path to file:// URI if needed
+      let fileUri = filePath;
+      if (!fileUri.startsWith("file://")) {
+        fileUri = "file://" + fileUri;
+      }
+
+      console.log("File URI:", fileUri);
+
       // Open PDF using system PDF viewer
       if (Platform.OS === "android") {
         try {
           // On Android, use IntentLauncher to open with system PDF viewer
+          console.log("Attempting to open with IntentLauncher");
           await IntentLauncher.startActivityAsync("android.intent.action.VIEW", {
-            data: filePath,
+            data: fileUri,
             flags: 1,
           });
         } catch (androidError) {
           console.error("Android intent error:", androidError);
-          // Fallback: try to open with file:// URI
+          // Fallback: use Sharing
+          console.log("Fallback to Sharing");
           await Sharing.shareAsync(filePath, {
             mimeType: "application/pdf",
             dialogTitle: `Open ${fileName}`,
@@ -78,6 +95,7 @@ export function PDFViewerModal({ visible, filePath, fileName, onClose }: PDFView
         }
       } else if (Platform.OS === "ios") {
         // On iOS, use Sharing to open with system PDF viewer
+        console.log("Opening with Sharing on iOS");
         await Sharing.shareAsync(filePath, {
           mimeType: "application/pdf",
           dialogTitle: `Open ${fileName}`,
