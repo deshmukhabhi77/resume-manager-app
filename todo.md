@@ -167,3 +167,15 @@
 - [x] Implement Chrome package detection
 - [x] Add fallback to system PDF viewer if Chrome not installed
 - [x] Test PDF opening in Chrome on Android
+
+## Native PDF Viewer Integration
+
+- [x] Install react-native-pdf package
+- [x] Create PdfViewerScreen component with native rendering
+- [x] Add PDF viewer route to navigation
+- [x] Update Home screen to navigate to PDF viewer
+- [x] Update Search screen to navigate to PDF viewer
+- [x] Remove Sharing API PDF opening (modal removed)
+- [x] Test PDF swipe and zoom functionality
+- [x] Verify offline functionality
+- [ ] Test on Android and iOS devices

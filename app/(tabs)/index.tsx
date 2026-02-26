@@ -5,7 +5,6 @@ import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useDB, Resume } from "@/lib/db-context";
 import { useColors } from "@/hooks/use-colors";
-import { PDFViewerModal } from "@/components/pdf-viewer-modal";
 
 type ListItem = { type: "header" } | { type: "resume"; data: Resume };
 
@@ -14,7 +13,7 @@ export default function HomeScreen() {
   const { resumes, getRecentResumes, loadResumes, deleteResume } = useDB();
   const colors = useColors();
   const [refreshing, setRefreshing] = useState(false);
-  const [selectedPDF, setSelectedPDF] = useState<{ path: string; name: string } | null>(null);
+
   const [deleting, setDeleting] = useState<string | null>(null);
 
   useEffect(() => {
@@ -192,7 +191,10 @@ export default function HomeScreen() {
                 </View>
                 <View className="flex-row gap-2">
                   <TouchableOpacity
-                    onPress={() => setSelectedPDF({ path: resume.filePath, name: resume.name })}
+                    onPress={() => router.push({
+                      pathname: "/pdf-viewer",
+                      params: { filePath: resume.filePath, fileName: resume.name }
+                    })}
                     className="flex-1 bg-primary rounded-lg py-2 items-center"
                   >
                     <Text className="text-white font-semibold text-sm">View PDF</Text>
@@ -237,15 +239,7 @@ export default function HomeScreen() {
         contentContainerStyle={{ paddingBottom: 20 }}
       />
 
-      {/* PDF Viewer Modal */}
-      {selectedPDF && (
-        <PDFViewerModal
-          visible={!!selectedPDF}
-          filePath={selectedPDF.path}
-          fileName={selectedPDF.name}
-          onClose={() => setSelectedPDF(null)}
-        />
-      )}
+
     </ScreenContainer>
   );
 }

@@ -5,7 +5,7 @@ import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useDB } from "@/lib/db-context";
 import { useColors } from "@/hooks/use-colors";
-import { PDFViewerModal } from "@/components/pdf-viewer-modal";
+
 
 export default function SearchScreen() {
   const router = useRouter();
@@ -13,7 +13,7 @@ export default function SearchScreen() {
   const colors = useColors();
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
-  const [selectedPDF, setSelectedPDF] = useState<{ path: string; name: string } | null>(null);
+
   const [deleting, setDeleting] = useState<string | null>(null);
 
   useEffect(() => {
@@ -146,7 +146,10 @@ export default function SearchScreen() {
               </View>
               <View className="flex-row gap-2">
                 <TouchableOpacity
-                  onPress={() => setSelectedPDF({ path: item.filePath, name: item.name })}
+                  onPress={() => router.push({
+                    pathname: "/pdf-viewer",
+                    params: { filePath: item.filePath, fileName: item.name }
+                  })}
                   className="flex-1 bg-primary rounded-lg py-2 items-center"
                 >
                   <Text className="text-white font-semibold text-sm">View PDF</Text>
@@ -187,15 +190,7 @@ export default function SearchScreen() {
         }
       />
 
-      {/* PDF Viewer Modal */}
-      {selectedPDF && (
-        <PDFViewerModal
-          visible={!!selectedPDF}
-          filePath={selectedPDF.path}
-          fileName={selectedPDF.name}
-          onClose={() => setSelectedPDF(null)}
-        />
-      )}
+
     </ScreenContainer>
   );
 }
