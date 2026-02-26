@@ -3,10 +3,6 @@ import { View, Text, TouchableOpacity, ActivityIndicator, Alert, Modal, ScrollVi
 import { IconSymbol } from "./ui/icon-symbol";
 import * as FileSystem from "expo-file-system/legacy";
 import * as Sharing from "expo-sharing";
-import * as WebBrowser from "expo-web-browser";
-
-// Warm up browser for faster loading
-WebBrowser.warmUpAsync().catch(() => {});
 
 interface PDFViewerModalProps {
   visible: boolean;
@@ -53,11 +49,10 @@ export function PDFViewerModal({ visible, filePath, fileName, onClose }: PDFView
     return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + " " + sizes[i];
   };
 
-  const handleOpenPDFInChrome = async () => {
+  const handleOpenPDF = async () => {
     try {
       setLoading(true);
-
-      console.log("Opening PDF in Chrome:", filePath);
+      console.log("Opening PDF:", filePath);
 
       // Check if file exists
       const info = await FileSystem.getInfoAsync(filePath);
@@ -67,62 +62,24 @@ export function PDFViewerModal({ visible, filePath, fileName, onClose }: PDFView
         return;
       }
 
-      console.log("File exists, size:", (info as any).size);
+      console.log("File exists, attempting to open");
 
-      // Convert file path to file:// URI if needed
-      let fileUri = filePath;
-      if (!fileUri.startsWith("file://")) {
-        fileUri = "file://" + fileUri;
+      // Simply use Sharing to open the PDF
+      // This will show the user's default PDF viewer or Chrome
+      const isAvailable = await Sharing.isAvailableAsync();
+      if (!isAvailable) {
+        Alert.alert("Error", "Unable to open PDF on this device");
+        return;
       }
 
-      console.log("File URI:", fileUri);
-
-      // Open PDF using Chrome on Android
-      if (Platform.OS === "android") {
-        try {
-          // Use WebBrowser to open PDF in Chrome
-          console.log("Opening with WebBrowser");
-          await WebBrowser.openBrowserAsync(fileUri, {
-            toolbarColor: "#19217b",
-            enableBarCollapsing: true,
-            showTitle: true,
-          });
-        } catch (browserError) {
-          console.error("WebBrowser error:", browserError);
-          // Fallback to sharing
-          console.log("Fallback to Sharing");
-          await Sharing.shareAsync(filePath, {
-            mimeType: "application/pdf",
-            dialogTitle: `Open ${fileName}`,
-          });
-        }
-      } else if (Platform.OS === "ios") {
-        try {
-          // Use WebBrowser on iOS
-          console.log("Opening with WebBrowser on iOS");
-          await WebBrowser.openBrowserAsync(fileUri, {
-            toolbarColor: "#19217b",
-          });
-        } catch (browserError) {
-          console.error("WebBrowser error:", browserError);
-          // Fallback to sharing
-          console.log("Fallback to Sharing");
-          await Sharing.shareAsync(filePath, {
-            mimeType: "application/pdf",
-            dialogTitle: `Open ${fileName}`,
-            UTI: "com.adobe.pdf",
-          });
-        }
-      } else {
-        // Web fallback
-        Alert.alert("Info", "PDF viewing is not available on web. Please use the Share option.");
-      }
+      await Sharing.shareAsync(filePath, {
+        mimeType: "application/pdf",
+        dialogTitle: `Open ${fileName}`,
+        UTI: "com.adobe.pdf",
+      });
     } catch (error) {
-      console.error("PDF open error:", error);
-      Alert.alert(
-        "Error",
-        "Unable to open PDF. Please ensure you have a PDF viewer app installed."
-      );
+      console.error("Error opening PDF:", error);
+      Alert.alert("Error", "Unable to open PDF. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -151,124 +108,97 @@ export function PDFViewerModal({ visible, filePath, fileName, onClose }: PDFView
       await Sharing.shareAsync(filePath, {
         mimeType: "application/pdf",
         dialogTitle: `Share ${fileName}`,
+        UTI: "com.adobe.pdf",
       });
     } catch (error) {
-      console.error("Share error:", error);
-      Alert.alert("Error", "Failed to share PDF");
+      console.error("Error sharing PDF:", error);
+      Alert.alert("Error", "Unable to share PDF. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
-  if (!fileInfo) {
-    return (
-      <Modal visible={visible} animationType="slide" transparent={false}>
-        <View className="flex-1 bg-white items-center justify-center">
-          <ActivityIndicator size="large" color="#19217b" />
-          <Text className="mt-4 text-slate-600">Loading...</Text>
-        </View>
-      </Modal>
-    );
-  }
-
-  if (!fileInfo.exists) {
-    return (
-      <Modal visible={visible} animationType="slide" transparent={false}>
-        <View className="flex-1 bg-white">
-          {/* Header */}
-          <View className="px-4 py-4 flex-row items-center justify-between border-b border-slate-200">
-            <Text className="text-lg font-bold text-slate-900">File Not Found</Text>
-            <TouchableOpacity onPress={onClose} className="p-2">
-              <IconSymbol name="chevron.right" size={24} color="#19217b" />
-            </TouchableOpacity>
-          </View>
-
-          {/* Content */}
-          <View className="flex-1 items-center justify-center gap-6 px-4">
-            <View className="w-24 h-24 bg-red-50 rounded-2xl flex items-center justify-center">
-              <IconSymbol name="description" size={64} color="#dc2626" />
-            </View>
-
-            <View className="items-center gap-2">
-              <Text className="text-xl font-bold text-slate-900">File Not Found</Text>
-              <Text className="text-sm text-slate-500 text-center">
-                The resume file may have been deleted or moved. Please upload it again.
-              </Text>
-            </View>
-
-            <TouchableOpacity
-              onPress={onClose}
-              className="w-full bg-primary rounded-lg py-3 items-center"
-            >
-              <Text className="text-white font-bold text-base">Close</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
-    );
-  }
-
   return (
-    <Modal visible={visible} animationType="slide" transparent={false}>
-      <View className="flex-1 bg-white">
+    <Modal visible={visible} animationType="slide" transparent={false} onRequestClose={onClose}>
+      <View className="flex-1 bg-background">
         {/* Header */}
-        <View className="px-4 py-4 flex-row items-center justify-between border-b border-slate-200 bg-white">
-          <View className="flex-1">
-            <Text className="text-lg font-bold text-slate-900 truncate">{fileName}</Text>
-            <Text className="text-xs text-slate-500 mt-1">
-              {fileInfo.size > 0 ? formatFileSize(fileInfo.size) : "PDF Document"}
-            </Text>
-          </View>
+        <View className="bg-primary px-4 py-4 flex-row items-center justify-between safe-area-top">
+          <Text className="text-lg font-semibold text-background flex-1">{fileName}</Text>
           <TouchableOpacity onPress={onClose} className="p-2">
-            <IconSymbol name="chevron.right" size={24} color="#19217b" />
+            <Text className="text-background text-2xl">✕</Text>
           </TouchableOpacity>
         </View>
 
         {/* Content */}
-        <ScrollView contentContainerStyle={{ flexGrow: 1 }} className="flex-1">
-          <View className="flex-1 items-center justify-center gap-6 px-4">
-            <View className="w-24 h-24 bg-blue-50 rounded-2xl flex items-center justify-center">
-              <IconSymbol name="picture_as_pdf" size={64} color="#2563eb" />
-            </View>
-
-            <View className="items-center gap-2">
-              <Text className="text-xl font-bold text-slate-900">Resume Ready</Text>
-              <Text className="text-sm text-slate-500 text-center">
-                Tap "Open in Chrome" to view this resume with Google Chrome
-              </Text>
-            </View>
-
-            {loading ? (
-              <ActivityIndicator size="large" color="#19217b" />
-            ) : (
-              <View className="w-full gap-3">
-                <TouchableOpacity
-                  onPress={handleOpenPDFInChrome}
-                  className="bg-primary rounded-lg py-3 items-center flex-row justify-center gap-2"
-                >
-                  <View className="w-6 h-6 bg-white rounded-full flex items-center justify-center">
-                    <Text className="text-primary font-bold text-sm">C</Text>
+        <ScrollView className="flex-1 px-4 py-6">
+          {fileInfo ? (
+            <View className="gap-4">
+              {/* File Info */}
+              <View className="bg-surface rounded-lg p-4 gap-3">
+                <View className="flex-row items-center gap-3">
+                  <View className="w-12 h-12 bg-primary rounded-lg items-center justify-center">
+                    <Text className="text-2xl">📄</Text>
                   </View>
-                  <Text className="text-white font-bold text-base">Open in Chrome</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  onPress={handleSharePDF}
-                  className="bg-blue-50 rounded-lg py-3 items-center border border-blue-200"
-                >
-                  <Text className="text-blue-700 font-semibold text-base">Share Resume</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  onPress={onClose}
-                  className="bg-white border border-slate-200 rounded-lg py-3 items-center"
-                >
-                  <Text className="text-slate-900 font-semibold text-base">Close</Text>
-                </TouchableOpacity>
+                  <View className="flex-1">
+                    <Text className="text-sm font-semibold text-foreground">{fileName}</Text>
+                    <Text className="text-xs text-muted">
+                      {fileInfo.exists ? formatFileSize(fileInfo.size) : "File not found"}
+                    </Text>
+                  </View>
+                </View>
               </View>
-            )}
-          </View>
+
+              {/* Status */}
+              {fileInfo.exists ? (
+                <View className="bg-success/10 rounded-lg p-4">
+                  <Text className="text-sm text-success font-medium">✓ File ready to open</Text>
+                </View>
+              ) : (
+                <View className="bg-error/10 rounded-lg p-4">
+                  <Text className="text-sm text-error font-medium">✗ File not found</Text>
+                </View>
+              )}
+            </View>
+          ) : (
+            <View className="items-center justify-center py-8">
+              <ActivityIndicator size="large" color="#19217b" />
+              <Text className="text-muted mt-4">Loading file information...</Text>
+            </View>
+          )}
         </ScrollView>
+
+        {/* Actions */}
+        <View className="px-4 py-4 gap-3 border-t border-border safe-area-bottom">
+          <TouchableOpacity
+            onPress={handleOpenPDF}
+            disabled={loading || !fileInfo?.exists}
+            className="bg-primary rounded-lg py-3 items-center"
+            style={{ opacity: loading || !fileInfo?.exists ? 0.6 : 1 }}
+          >
+            {loading ? (
+              <ActivityIndicator color="#ffffff" />
+            ) : (
+              <Text className="text-background font-semibold">Open PDF</Text>
+            )}
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={handleSharePDF}
+            disabled={loading || !fileInfo?.exists}
+            className="bg-surface border border-primary rounded-lg py-3 items-center"
+            style={{ opacity: loading || !fileInfo?.exists ? 0.6 : 1 }}
+          >
+            {loading ? (
+              <ActivityIndicator color="#19217b" />
+            ) : (
+              <Text className="text-primary font-semibold">Share Resume</Text>
+            )}
+          </TouchableOpacity>
+
+          <TouchableOpacity onPress={onClose} className="bg-surface rounded-lg py-3 items-center">
+            <Text className="text-foreground font-semibold">Close</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     </Modal>
   );
