@@ -13,6 +13,7 @@ export default function SearchScreen() {
   const colors = useColors();
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
+  const [experienceFilter, setExperienceFilter] = useState<"all" | "fresher" | "experienced">("all");
 
   const [deleting, setDeleting] = useState<string | null>(null);
 
@@ -30,8 +31,15 @@ export default function SearchScreen() {
   }, [query]);
 
   const results = useMemo(() => {
-    return searchResumes(debouncedQuery);
-  }, [debouncedQuery, searchResumes]);
+    let filtered = searchResumes(debouncedQuery);
+    
+    // Apply experience level filter
+    if (experienceFilter !== "all") {
+      filtered = filtered.filter(resume => resume.experienceLevel === experienceFilter);
+    }
+    
+    return filtered;
+  }, [debouncedQuery, experienceFilter, searchResumes]);
 
   const handleDeleteResume = (id: string, name: string) => {
     Alert.alert(
@@ -102,7 +110,7 @@ export default function SearchScreen() {
       </View>
 
       {/* Search Input */}
-      <View className="px-4 py-4 gap-2">
+      <View className="px-4 py-4 gap-3">
         <View className="flex-row items-center bg-white border border-slate-200 rounded-lg px-3 gap-2">
           <IconSymbol name="search" size={20} color={colors.muted} />
           <TextInput
@@ -113,6 +121,47 @@ export default function SearchScreen() {
             placeholderTextColor="#999"
           />
         </View>
+        
+        {/* Experience Level Filter Tabs */}
+        <View className="flex-row gap-2">
+          <TouchableOpacity
+            onPress={() => setExperienceFilter("all")}
+            className={`flex-1 py-2 px-3 rounded-lg items-center ${
+              experienceFilter === "all" ? "bg-blue-600" : "bg-slate-100"
+            }`}
+          >
+            <Text className={`text-sm font-semibold ${
+              experienceFilter === "all" ? "text-white" : "text-slate-700"
+            }`}>
+              All
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => setExperienceFilter("fresher")}
+            className={`flex-1 py-2 px-3 rounded-lg items-center ${
+              experienceFilter === "fresher" ? "bg-blue-600" : "bg-slate-100"
+            }`}
+          >
+            <Text className={`text-sm font-semibold ${
+              experienceFilter === "fresher" ? "text-white" : "text-slate-700"
+            }`}>
+              Fresher
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => setExperienceFilter("experienced")}
+            className={`flex-1 py-2 px-3 rounded-lg items-center ${
+              experienceFilter === "experienced" ? "bg-blue-600" : "bg-slate-100"
+            }`}
+          >
+            <Text className={`text-sm font-semibold ${
+              experienceFilter === "experienced" ? "text-white" : "text-slate-700"
+            }`}>
+              Experienced
+            </Text>
+          </TouchableOpacity>
+        </View>
+        
         <Text className="text-xs text-slate-500 px-1">
           {results.length} result{results.length !== 1 ? "s" : ""}
         </Text>
@@ -169,12 +218,14 @@ export default function SearchScreen() {
         scrollEnabled={true}
         contentContainerStyle={{ paddingBottom: 20 }}
         ListEmptyComponent={
-          query.length > 0 ? (
+          query.length > 0 || experienceFilter !== "all" ? (
             <View className="px-4 py-8">
               <View className="bg-slate-50 rounded-2xl p-6 items-center">
                 <IconSymbol name="search" size={48} color={colors.muted} />
                 <Text className="text-slate-600 text-center mt-4 text-sm">
-                  No resumes found for "{query}"
+                  {query.length > 0 
+                    ? `No resumes found for "${query}"`
+                    : "No resumes found with selected filter"}
                 </Text>
               </View>
             </View>

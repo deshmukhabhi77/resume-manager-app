@@ -198,3 +198,10 @@
 - [x] Add storage usage analytics
 - [x] Add charts/visualizations for statistics
 - [x] Test statistics functionality (8 tests passing)
+
+## Search Filters Feature
+
+- [x] Add filter UI (Fresher/Experienced tabs) to Search screen
+- [x] Implement filter state management
+- [x] Add filter logic to search results
+- [x] Test search filters functionality
