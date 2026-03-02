@@ -6,6 +6,7 @@ export interface Resume {
   id: string;
   name: string;
   designation: string;
+  mobileNumber: string;
   experienceLevel: "fresher" | "experience";
   filePath: string;
   fileSize: number;
@@ -14,7 +15,7 @@ export interface Resume {
 
 interface DBContextType {
   resumes: Resume[];
-  addResume: (name: string, designation: string, experienceLevel: "fresher" | "experience", filePath: string, fileSize: number) => Promise<void>;
+  addResume: (name: string, designation: string, mobileNumber: string, experienceLevel: "fresher" | "experience", filePath: string, fileSize: number) => Promise<void>;
   searchResumes: (query: string) => Resume[];
   getRecentResumes: (limit: number) => Resume[];
   deleteResume: (id: string) => Promise<void>;
@@ -48,7 +49,7 @@ export function DBProvider({ children }: { children: React.ReactNode }) {
 
   // Add a new resume with file copying
   const addResume = useCallback(
-    async (name: string, designation: string, experienceLevel: "fresher" | "experience", filePath: string, fileSize: number) => {
+    async (name: string, designation: string, mobileNumber: string, experienceLevel: "fresher" | "experience", filePath: string, fileSize: number) => {
       try {
         // Copy file to internal storage
         const storedFilePath = await copyResumeToStorage(filePath, name);
@@ -57,6 +58,7 @@ export function DBProvider({ children }: { children: React.ReactNode }) {
           id: Date.now().toString(),
           name,
           designation,
+          mobileNumber,
           experienceLevel,
           filePath: storedFilePath,
           fileSize,

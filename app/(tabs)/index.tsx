@@ -177,6 +177,7 @@ export default function HomeScreen() {
                   <View className="flex-1 min-w-0">
                     <Text className="text-slate-900 text-sm font-semibold truncate">{resume.name}</Text>
                     <Text className="text-slate-500 text-xs mt-1">{resume.designation}</Text>
+                    <Text className="text-slate-500 text-xs mt-1">{resume.mobileNumber}</Text>
                     <View className="flex-row gap-2 mt-2 items-center">
                       <View className={`px-2 py-1 rounded ${getExperienceBadgeColor(resume.experienceLevel)}`}>
                         <Text className={`text-xs font-semibold ${getExperienceBadgeTextColor(resume.experienceLevel)}`}>

@@ -132,6 +132,7 @@ export default function SearchScreen() {
                 <View className="flex-1 min-w-0">
                   <Text className="text-slate-900 text-sm font-semibold">{item.name}</Text>
                   <Text className="text-slate-500 text-xs mt-1">{item.designation}</Text>
+                  <Text className="text-slate-500 text-xs mt-1">{item.mobileNumber}</Text>
                   <View className="flex-row gap-2 mt-2 items-center">
                     <View className={`px-2 py-1 rounded ${getExperienceBadgeColor(item.experienceLevel)}`}>
                       <Text className={`text-xs font-semibold ${getExperienceBadgeTextColor(item.experienceLevel)}`}>

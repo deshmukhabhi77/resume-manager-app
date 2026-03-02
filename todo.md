@@ -179,3 +179,12 @@
 - [x] Test PDF swipe and zoom functionality
 - [x] Verify offline functionality
 - [ ] Test on Android and iOS devices
+
+## Mobile Number Field Feature
+
+- [x] Update Resume interface to include mobileNumber field
+- [x] Update database context to handle mobileNumber
+- [x] Add mobile number input to Upload screen
+- [x] Display mobile number on Home screen resume cards
+- [x] Display mobile number on Search screen resume cards
+- [x] Test mobile number functionality
