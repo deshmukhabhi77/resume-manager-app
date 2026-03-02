@@ -188,3 +188,13 @@
 - [x] Display mobile number on Home screen resume cards
 - [x] Display mobile number on Search screen resume cards
 - [x] Test mobile number functionality
+
+## Statistics Dashboard Feature
+
+- [x] Create statistics calculation utilities
+- [x] Build Insights screen with dashboard layout
+- [x] Add total resumes count card
+- [x] Add experience level breakdown (Fresher/Experienced)
+- [x] Add storage usage analytics
+- [x] Add charts/visualizations for statistics
+- [x] Test statistics functionality (8 tests passing)
