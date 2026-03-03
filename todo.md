@@ -205,3 +205,12 @@
 - [x] Implement filter state management
 - [x] Add filter logic to search results
 - [x] Test search filters functionality
+
+## Folders Tab Feature
+
+- [x] Re-enable Folders tab in bottom navigation
+- [x] Implement Folders screen with compact list view
+- [x] Display all resumes line by line with metadata
+- [x] Add delete button to each resume item
+- [x] Implement delete functionality with confirmation
+- [x] Test Folders tab functionality
