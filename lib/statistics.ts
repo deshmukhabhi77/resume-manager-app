@@ -9,7 +9,7 @@ export interface StatisticsData {
   storagePercentage: number; // 0-100
 }
 
-const STORAGE_LIMIT = 500 * 1024 * 1024; // 500MB limit
+const STORAGE_LIMIT = 5 * 1024 * 1024 * 1024; // 5GB limit
 
 export function calculateStatistics(resumes: Resume[]): StatisticsData {
   const totalResumes = resumes.length;

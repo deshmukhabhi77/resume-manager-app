@@ -55,13 +55,13 @@ describe("Statistics", () => {
           mobileNumber: "1234567890",
           experienceLevel: "fresher",
           filePath: "/path/to/file1.pdf",
-          fileSize: 250 * 1024 * 1024, // 250MB
+          fileSize: 2.5 * 1024 * 1024 * 1024, // 2.5GB
           uploadedAt: Date.now(),
         },
       ];
 
       const stats = calculateStatistics(resumes);
-      expect(stats.storagePercentage).toBe(50); // 250MB / 500MB = 50%
+      expect(stats.storagePercentage).toBe(50); // 2.5GB / 5GB = 50%
     });
   });
 
@@ -71,6 +71,7 @@ describe("Statistics", () => {
       expect(formatBytes(1024)).toBe("1 KB");
       expect(formatBytes(1024 * 1024)).toBe("1 MB");
       expect(formatBytes(1024 * 1024 * 1024)).toBe("1 GB");
+      expect(formatBytes(5 * 1024 * 1024 * 1024)).toBe("5 GB");
     });
 
     it("should format decimal bytes correctly", () => {

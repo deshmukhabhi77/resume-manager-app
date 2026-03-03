@@ -130,7 +130,7 @@ export default function InsightsScreen() {
                 <View className="flex-1">
                   <Text className="text-sm font-semibold text-slate-700">{storageStatus.message}</Text>
                   <Text className="text-xs text-slate-600 mt-1">
-                    {formatBytes(stats.totalStorageUsed)} of 500 MB used
+                    {formatBytes(stats.totalStorageUsed)} of 5 GB used
                   </Text>
                 </View>
                 <View className="items-center">
@@ -165,7 +165,7 @@ export default function InsightsScreen() {
                 <View className="items-end">
                   <Text className="text-xs text-slate-600">Available Space</Text>
                   <Text className="text-sm font-semibold text-slate-900 mt-1">
-                    {formatBytes(500 * 1024 * 1024 - stats.totalStorageUsed)}
+                    {formatBytes(5 * 1024 * 1024 * 1024 - stats.totalStorageUsed)}
                   </Text>
                 </View>
               </View>

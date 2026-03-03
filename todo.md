@@ -214,3 +214,10 @@
 - [x] Add delete button to each resume item
 - [x] Implement delete functionality with confirmation
 - [x] Test Folders tab functionality
+
+## Storage Limit Update (5 GB)
+
+- [x] Update storage limit constant from 500 MB to 5 GB
+- [x] Update statistics calculations for 5 GB limit
+- [x] Update storage usage display in Insights screen
+- [x] Test storage calculations with new limit
