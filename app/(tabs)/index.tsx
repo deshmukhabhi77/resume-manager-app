@@ -1,10 +1,11 @@
 import { ScrollView, Text, View, TouchableOpacity, FlatList, RefreshControl, Alert } from "react-native";
 import { useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useDB, Resume } from "@/lib/db-context";
 import { useColors } from "@/hooks/use-colors";
+import { calculateStatistics } from "@/lib/statistics";
 
 type ListItem = { type: "header" } | { type: "resume"; data: Resume };
 
@@ -21,6 +22,7 @@ export default function HomeScreen() {
   }, []);
 
   const recentResumes = getRecentResumes(5);
+  const stats = useMemo(() => calculateStatistics(resumes), [resumes]);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -110,7 +112,7 @@ export default function HomeScreen() {
                       <View className="w-px bg-white/20" />
                       <View>
                         <Text className="text-white/60 text-xs uppercase tracking-wider font-semibold">Storage</Text>
-                        <Text className="text-white text-sm font-medium">45% used</Text>
+                        <Text className="text-white text-sm font-medium">{Math.round(stats.storagePercentage)}% used</Text>
                       </View>
                     </View>
                   </View>

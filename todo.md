@@ -221,3 +221,10 @@
 - [x] Update statistics calculations for 5 GB limit
 - [x] Update storage usage display in Insights screen
 - [x] Test storage calculations with new limit
+
+## Storage Calculation Bug Fix
+
+- [x] Fix storage percentage showing 45% instead of correct percentage
+- [x] Check Home screen storage calculation
+- [x] Verify all storage displays use 5 GB limit
+- [x] Test storage calculations
