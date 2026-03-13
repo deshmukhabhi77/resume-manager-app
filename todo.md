@@ -228,3 +228,11 @@
 - [x] Check Home screen storage calculation
 - [x] Verify all storage displays use 5 GB limit
 - [x] Test storage calculations
+
+## Settings Tab - About Us & Privacy Policy
+
+- [x] Create Settings screen with About Us section
+- [x] Add developer and organization information
+- [x] Add Privacy Policy section
+- [x] Implement expandable/collapsible sections
+- [x] Test Settings screen functionality

@@ -20,6 +20,8 @@ const MAPPING = {
   "paperplane.fill": "send",
   "chevron.left.forwardslash.chevron.right": "code",
   "chevron.right": "chevron-right",
+  "chevron.up": "expand-less",
+  "chevron.down": "expand-more",
   "cloud_upload": "cloud-upload",
   "search": "search",
   "description": "description",
@@ -27,6 +29,10 @@ const MAPPING = {
   "more_vert": "more-vert",
   "lightbulb": "lightbulb",
   "delete": "delete",
+  "info": "info",
+  "lock": "lock",
+  "envelope": "mail",
+  "globe": "public",
 } as const;
 
 type IconSymbolName = keyof typeof MAPPING;
